@@ -47,9 +47,6 @@ class Ellipse : public ConvexSet<2> {
 
   Real SupportFunction(const Vec2f& n, Vec2f& sp) const final;
 
-  template <typename Derived>
-  Real SupportFunction(const MatrixBase<Derived>& n, Vec2f& sp) const;
-
  private:
   const Real hlx2_;   /**< Square of the half x-axis length. */
   const Real hly2_;   /**< Square of the half y-axis length. */
@@ -63,19 +60,11 @@ inline Ellipse::Ellipse(Real hlx, Real hly, Real margin)
   SetInradius(std::min(hlx, hly) + margin);
 }
 
-template <typename Derived>
-inline Real Ellipse::SupportFunction(const MatrixBase<Derived>& n,
-                                     Vec2f& sp) const {
-  static_assert(Derived::RowsAtCompileTime == 2, "Size of normal is not 2!");
-
+inline Real Ellipse::SupportFunction(const Vec2f& n, Vec2f& sp) const {
   const Real k{std::sqrt(hlx2_ * n(0) * n(0) + hly2_ * n(1) * n(1))};
   sp(0) = (hlx2_ / k + margin_) * n(0);
   sp(1) = (hly2_ / k + margin_) * n(1);
   return k + margin_;
-}
-
-inline Real Ellipse::SupportFunction(const Vec2f& n, Vec2f& sp) const {
-  return SupportFunction<Vec2f>(n, sp);
 }
 
 }  // namespace dgd

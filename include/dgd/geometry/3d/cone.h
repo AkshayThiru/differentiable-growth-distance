@@ -55,9 +55,6 @@ class Cone : public ConvexSet<3> {
 
   Real SupportFunction(const Vec3f& n, Vec3f& sp) const final;
 
-  template <typename Derived>
-  Real SupportFunction(const MatrixBase<Derived>& n, Vec3f& sp) const;
-
  private:
   const Real r_;      /**< Radius. */
   const Real h_;      /**< Height. */
@@ -75,11 +72,7 @@ inline Cone::Cone(Real radius, Real height, Real margin)
   SetInradius(rho_ + margin);
 }
 
-template <typename Derived>
-inline Real Cone::SupportFunction(const MatrixBase<Derived>& n,
-                                  Vec3f& sp) const {
-  static_assert(Derived::RowsAtCompileTime == 3, "Size of normal is not 3!");
-
+inline Real Cone::SupportFunction(const Vec3f& n, Vec3f& sp) const {
   sp = margin_ * n;
   if (n(2) >= sha_) {
     // The cone vertex is the support point.
@@ -87,15 +80,11 @@ inline Real Cone::SupportFunction(const MatrixBase<Derived>& n,
     return (h_ - rho_) * n(2) + margin_;
   } else {
     // The support point lies in the cone base.
-    const Real k{std::sqrt(Real(1.0) - n(2) * n(2))};
-    sp.head<2>() += r_ / k * n.template head<2>();
+    const Real k{std::sqrt(n(0) * n(0) + n(1) * n(1))};
+    if (k > kEps) sp.head<2>() += r_ * n.head<2>() / k;
     sp(2) -= rho_;
-    return r_ * k - rho_ * n(2) + margin_;
+    return sp.dot(n);
   }
-}
-
-inline Real Cone::SupportFunction(const Vec3f& n, Vec3f& sp) const {
-  return SupportFunction<Vec3f>(n, sp);
 }
 
 }  // namespace dgd

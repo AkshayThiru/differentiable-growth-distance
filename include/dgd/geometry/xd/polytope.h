@@ -25,6 +25,7 @@
 #include <Eigen/Dense>
 #include <cassert>
 #include <cmath>
+#include <vector>
 
 #include "dgd/data_types.h"
 #include "dgd/geometry/convex_set.h"
@@ -42,61 +43,56 @@ class Polytope : public ConvexSet<dim> {
   /**
    * @brief Constructs a Polytope object.
    *
-   * @note The convex hull of pts must contain the origin in its interior.
+   * @note The polytope must contain the origin in its interior.
    *
-   * @param pts      (dim, n) matrix consisting of n dim-dimensional vertices.
+   * @param pts      Vector consisting of n dim-dimensional vertices.
    * @param margin   Safety margin.
    * @param inradius Polytope inradius.
    */
-  Polytope(const MatXf<dim>& pts, Real margin, Real inradius);
+  Polytope(const std::vector<Vecf<dim>>& pts, Real margin, Real inradius);
 
   ~Polytope() {};
 
   Real SupportFunction(const Vecf<dim>& n, Vecf<dim>& sp) const final;
 
-  template <typename Derived>
-  Real SupportFunction(const MatrixBase<Derived>& n, Vecf<dim>& sp) const;
-
  private:
-  const MatXf<dim> pts_; /**< Polytope vertices. */
-  const Real margin_;    /**< Safety margin. */
+  const std::vector<Vecf<dim>> pts_; /**< Polytope vertices. */
+  const Real margin_;                /**< Safety margin. */
 };
 
 template <int dim>
-inline Polytope<dim>::Polytope(const MatXf<dim>& pts, Real margin,
+inline Polytope<dim>::Polytope(const std::vector<Vecf<dim>>& pts, Real margin,
                                Real inradius)
     : ConvexSet<dim>(margin + inradius), pts_(pts), margin_(margin) {
   static_assert((dim == 2) || (dim == 3),
                 "Incompatible dimension (not 2 or 3)!");
   assert(margin >= Real(0.0));
 
-  const int num_pts{static_cast<int>(pts.cols())};
+  const int num_pts{static_cast<int>(pts.size())};
   assert(num_pts >= dim + 1);
 
-  MatXf<dim> aff_pts{pts.rightCols(num_pts - 1)};
-  aff_pts.colwise() -= pts.col(0);
+  MatXf<dim> aff_pts(dim, num_pts - 1);
+  for (int i = 1; i < num_pts; ++i) aff_pts.col(i - 1) = pts[i] - pts[0];
   const Eigen::ColPivHouseholderQR<MatXf<dim>> qr(aff_pts);
   const int rank{static_cast<int>(qr.rank())};
   assert(rank == dim);
 }
 
 template <int dim>
-template <typename Derived>
-inline Real Polytope<dim>::SupportFunction(const MatrixBase<Derived>& n,
-                                           Vecf<dim>& sp) const {
-  static_assert(Derived::RowsAtCompileTime == dim,
-                "Size of normal is not equal to dim!");
-
-  int idx{0};
-  const Real v{(pts_.transpose() * n).maxCoeff(&idx)};
-  sp = pts_.col(idx) + margin_ * n;
-  return v + margin_;
-}
-
-template <int dim>
 inline Real Polytope<dim>::SupportFunction(const Vecf<dim>& n,
                                            Vecf<dim>& sp) const {
-  return SupportFunction<Vecf<dim>>(n, sp);
+  int idx{0};
+  Real s{0.0}, sv{n.dot(pts_[0])};
+  for (int i = 1; i < pts_.size(); ++i) {
+    s = n.dot(pts_[i]);
+    if (s > sv) {
+      idx = i;
+      sv = s;
+    }
+  }
+
+  sp = pts_[idx] + margin_ * n;
+  return sv + margin_;
 }
 
 typedef Polytope<2> Polygon;

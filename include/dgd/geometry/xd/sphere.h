@@ -48,9 +48,6 @@ class Sphere : public ConvexSet<dim> {
 
   Real SupportFunction(const Vecf<dim>& n, Vecf<dim>& sp) const final;
 
-  template <typename Derived>
-  Real SupportFunction(const MatrixBase<Derived>& n, Vecf<dim>& sp) const;
-
  private:
   const Real radius_; /**< Radius. */
 };
@@ -63,20 +60,10 @@ inline Sphere<dim>::Sphere(Real radius)
 }
 
 template <int dim>
-template <typename Derived>
-inline Real Sphere<dim>::SupportFunction(const MatrixBase<Derived>& n,
-                                         Vecf<dim>& sp) const {
-  static_assert(Derived::RowsAtCompileTime == dim,
-                "Size of normal is not equal to dim!");
-
-  sp = radius_ * n;
-  return radius_;
-}
-
-template <int dim>
 inline Real Sphere<dim>::SupportFunction(const Vecf<dim>& n,
                                          Vecf<dim>& sp) const {
-  return SupportFunction<Vecf<dim>>(n, sp);
+  sp = radius_ * n;
+  return radius_;
 }
 
 typedef Sphere<2> Circle;

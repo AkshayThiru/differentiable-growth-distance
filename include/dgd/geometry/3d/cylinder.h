@@ -13,14 +13,14 @@
 // limitations under the License.
 
 /**
- * @file capsule.h
+ * @file cylinder.h
  * @author Akshay Thirugnanam (akshay_t@berkeley.edu)
- * @date 2025-03-01
- * @brief 2D/3D capsule class.
+ * @date 2025-03-06
+ * @brief 3D cylinder class.
  */
 
-#ifndef DGD_GEOMETRY_XD_CAPSULE_H_
-#define DGD_GEOMETRY_XD_CAPSULE_H_
+#ifndef DGD_GEOMETRY_3D_CYLINDER_H_
+#define DGD_GEOMETRY_3D_CYLINDER_H_
 
 #include <cassert>
 #include <cmath>
@@ -31,28 +31,24 @@
 namespace dgd {
 
 /**
- * @brief Axis-aligned 2D/3D capsule class.
+ * @brief Axis-aligned 3D cylinder class.
  *
- * @note The capsule is oriented along the x-axis. The axis length of the
- * capsule does not include the radius.
- *
- * @tparam dim Dimension of the capsule.
+ * @note The cylinder is oriented along the x-axis.
  */
-template <int dim>
-class Capsule : public ConvexSet<dim> {
+class Cylinder : public ConvexSet<3> {
  public:
   /**
-   * @brief Constructs a Capsule object.
+   * @brief Constructs a Cylinder object.
    *
    * @param hlx    Half axis length.
    * @param radius Radius.
    * @param margin Safety margin.
    */
-  Capsule(Real hlx, Real radius, Real margin);
+  Cylinder(Real hlx, Real radius, Real margin);
 
-  ~Capsule() {};
+  ~Cylinder() {};
 
-  Real SupportFunction(const Vecf<dim>& n, Vecf<dim>& sp) const final;
+  Real SupportFunction(const Vec3f& n, Vec3f& sp) const final;
 
  private:
   const Real hlx_;    /**< Half axis length. */
@@ -60,26 +56,21 @@ class Capsule : public ConvexSet<dim> {
   const Real margin_; /**< Safety margin. */
 };
 
-template <int dim>
-inline Capsule<dim>::Capsule(Real hlx, Real radius, Real margin)
-    : ConvexSet<dim>(margin + radius),
-      hlx_(hlx),
-      radius_(radius),
-      margin_(margin) {
-  static_assert((dim == 2) || (dim == 3),
-                "Incompatible dimension (not 2 or 3)!");
+inline Cylinder::Cylinder(Real hlx, Real radius, Real margin)
+    : ConvexSet<3>(), hlx_(hlx), radius_(radius), margin_(margin) {
   assert((hlx > Real(0.0)) && (radius > Real(0.0)));
   assert(margin >= Real(0.0));
+  SetInradius(std::min(hlx, radius) + margin);
 }
 
-template <int dim>
-inline Real Capsule<dim>::SupportFunction(const Vecf<dim>& n,
-                                          Vecf<dim>& sp) const {
-  sp = Capsule<dim>::inradius_ * n;
+inline Real Cylinder::SupportFunction(const Vec3f& n, Vec3f& sp) const {
+  sp = margin_ * n;
+  const Real k{std::sqrt(n(1) * n(1) + n(2) * n(2))};
+  if (k > kEps) sp.tail<2>() += radius_ * n.tail<2>() / k;
   sp(0) += std::copysign(hlx_, n(0));
   return sp.dot(n);
 }
 
 }  // namespace dgd
 
-#endif  // DGD_GEOMETRY_XD_CAPSULE_H_
+#endif  // DGD_GEOMETRY_3D_CYLINDER_H_

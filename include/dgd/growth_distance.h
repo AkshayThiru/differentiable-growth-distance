@@ -77,10 +77,8 @@ inline void UpdateNormal(const Matf<2, 2>& simplex, Vec2f& normal) {
  * @param[out] out     Solver output.
  * @return     The updated value of the upper bound.
  */
-template <typename DerivedA, typename DerivedB>
-inline Real UpdateSimplex(const Vec2f& sp, const MatrixBase<DerivedA>& sp1,
-                          const MatrixBase<DerivedB>& sp2, Matf<2, 2>& simplex,
-                          SolverOutput<2>& out) {
+inline Real UpdateSimplex(const Vec2f& sp, const Vec2f& sp1, const Vec2f& sp2,
+                          Matf<2, 2>& simplex, SolverOutput<2>& out) {
   const int idx = (sp(0) >= 0);
   simplex.col(idx) = sp;
   out.s1.col(idx) = sp1;

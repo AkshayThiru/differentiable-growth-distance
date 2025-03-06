@@ -47,9 +47,6 @@ class Cuboid : public ConvexSet<3> {
 
   Real SupportFunction(const Vec3f& n, Vec3f& sp) const final;
 
-  template <typename Derived>
-  Real SupportFunction(const MatrixBase<Derived>& n, Vec3f& sp) const;
-
  private:
   const Real hlx_;    /**< Half x-axis side length. */
   const Real hly_;    /**< Half y-axis side length. */
@@ -64,20 +61,12 @@ inline Cuboid::Cuboid(Real hlx, Real hly, Real hlz, Real margin)
   SetInradius(std::min({hlx, hly, hlz}) + margin);
 }
 
-template <typename Derived>
-inline Real Cuboid::SupportFunction(const MatrixBase<Derived>& n,
-                                    Vec3f& sp) const {
-  static_assert(Derived::RowsAtCompileTime == 3, "Size of normal is not 3!");
-
+inline Real Cuboid::SupportFunction(const Vec3f& n, Vec3f& sp) const {
   sp = margin_ * n;
   sp(0) += std::copysign(hlx_, n(0));
   sp(1) += std::copysign(hly_, n(1));
   sp(2) += std::copysign(hlz_, n(2));
   return sp.dot(n);
-}
-
-inline Real Cuboid::SupportFunction(const Vec3f& n, Vec3f& sp) const {
-  return SupportFunction<Vec3f>(n, sp);
 }
 
 }  // namespace dgd

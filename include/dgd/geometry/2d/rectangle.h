@@ -47,9 +47,6 @@ class Rectangle : public ConvexSet<2> {
 
   Real SupportFunction(const Vec2f& n, Vec2f& sp) const final;
 
-  template <typename Derived>
-  Real SupportFunction(const MatrixBase<Derived>& n, Vec2f& sp) const;
-
  private:
   const Real hlx_;    /**< Half x-axis side length. */
   const Real hly_;    /**< Half y-axis side length. */
@@ -63,19 +60,11 @@ inline Rectangle::Rectangle(Real hlx, Real hly, Real margin)
   SetInradius(std::min(hlx, hly) + margin);
 }
 
-template <typename Derived>
-inline Real Rectangle::SupportFunction(const MatrixBase<Derived>& n,
-                                       Vec2f& sp) const {
-  static_assert(Derived::RowsAtCompileTime == 2, "Size of normal is not 2!");
-
+inline Real Rectangle::SupportFunction(const Vec2f& n, Vec2f& sp) const {
   sp = margin_ * n;
   sp(0) += std::copysign(hlx_, n(0));
   sp(1) += std::copysign(hly_, n(1));
   return sp.dot(n);
-}
-
-inline Real Rectangle::SupportFunction(const Vec2f& n, Vec2f& sp) const {
-  return SupportFunction<Vec2f>(n, sp);
 }
 
 }  // namespace dgd

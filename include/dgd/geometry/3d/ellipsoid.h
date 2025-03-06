@@ -47,9 +47,6 @@ class Ellipsoid : public ConvexSet<3> {
 
   Real SupportFunction(const Vec3f& n, Vec3f& sp) const final;
 
-  template <typename Derived>
-  Real SupportFunction(const MatrixBase<Derived>& n, Vec3f& sp) const;
-
  private:
   const Real hlx2_;   /**< Square of the half x-axis length. */
   const Real hly2_;   /**< Square of the half y-axis length. */
@@ -68,21 +65,13 @@ inline Ellipsoid::Ellipsoid(Real hlx, Real hly, Real hlz, Real margin)
   SetInradius(std::min({hlx, hly, hlz}) + margin);
 }
 
-template <typename Derived>
-inline Real Ellipsoid::SupportFunction(const MatrixBase<Derived>& n,
-                                       Vec3f& sp) const {
-  static_assert(Derived::RowsAtCompileTime == 3, "Size of normal is not 3!");
-
+inline Real Ellipsoid::SupportFunction(const Vec3f& n, Vec3f& sp) const {
   const Real k{std::sqrt(hlx2_ * n(0) * n(0) + hly2_ * n(1) * n(1) +
                          hlz2_ * n(2) * n(2))};
   sp(0) = (hlx2_ / k + margin_) * n(0);
   sp(1) = (hly2_ / k + margin_) * n(1);
   sp(2) = (hlz2_ / k + margin_) * n(2);
   return k + margin_;
-}
-
-inline Real Ellipsoid::SupportFunction(const Vec3f& n, Vec3f& sp) const {
-  return SupportFunction<Vec3f>(n, sp);
 }
 
 }  // namespace dgd
