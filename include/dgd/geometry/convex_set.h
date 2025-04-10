@@ -95,7 +95,7 @@ class ConvexSet {
    * support function is attained.
    * @return     Value of the support function at the normal vector.
    */
-  virtual Real SupportFunction(const Vecf<dim>& n, Vecf<dim>& sp) const = 0;
+  virtual Real SupportFunction(const Vecf<dim>& n, Vecf<dim>& sp) = 0;
 
   /**
    * @brief Gets the dimension of the convex set.

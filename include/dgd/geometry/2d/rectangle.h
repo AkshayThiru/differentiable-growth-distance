@@ -45,7 +45,7 @@ class Rectangle : public ConvexSet<2> {
 
   ~Rectangle() {};
 
-  Real SupportFunction(const Vec2f& n, Vec2f& sp) const final;
+  Real SupportFunction(const Vec2f& n, Vec2f& sp) final;
 
  private:
   const Real hlx_;    /**< Half x-axis side length. */
@@ -60,7 +60,7 @@ inline Rectangle::Rectangle(Real hlx, Real hly, Real margin)
   SetInradius(std::min(hlx, hly) + margin);
 }
 
-inline Real Rectangle::SupportFunction(const Vec2f& n, Vec2f& sp) const {
+inline Real Rectangle::SupportFunction(const Vec2f& n, Vec2f& sp) {
   sp = margin_ * n;
   sp(0) += std::copysign(hlx_, n(0));
   sp(1) += std::copysign(hly_, n(1));

@@ -48,7 +48,7 @@ class Cylinder : public ConvexSet<3> {
 
   ~Cylinder() {};
 
-  Real SupportFunction(const Vec3f& n, Vec3f& sp) const final;
+  Real SupportFunction(const Vec3f& n, Vec3f& sp) final;
 
  private:
   const Real hlx_;    /**< Half axis length. */
@@ -63,7 +63,7 @@ inline Cylinder::Cylinder(Real hlx, Real radius, Real margin)
   SetInradius(std::min(hlx, radius) + margin);
 }
 
-inline Real Cylinder::SupportFunction(const Vec3f& n, Vec3f& sp) const {
+inline Real Cylinder::SupportFunction(const Vec3f& n, Vec3f& sp) {
   sp = margin_ * n;
   const Real k{std::sqrt(n(1) * n(1) + n(2) * n(2))};
   if (k > kEps) sp.tail<2>() += radius_ * n.tail<2>() / k;

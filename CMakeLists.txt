@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.15)
 option(BUILD_TESTS "Build tests" ON)
 option(BUILD_BENCHMARKS
   "Build benchmarks (only built if BUILD_TESTS is enabled)"
-  ON
+  OFF
 )
 option(BUILD_APPS "Build examples" OFF)
 option(BUILD_DOCS "Add documentation" OFF)
