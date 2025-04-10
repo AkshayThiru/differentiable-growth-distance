@@ -46,12 +46,12 @@ constexpr Real kEpsSqrt{
 constexpr Real kPi{static_cast<Real>(EIGEN_PI)}; /**< \f$\pi\f$. */
 
 /**
- * @brief Dynamic size vector.
+ * @brief Dynamic-size vector.
  */
 using VecXf = Eigen::Vector<Real, -1>;
 
 /**
- * @brief Fixed dimension vector.
+ * @brief Fixed-dimension vector.
  *
  * @tparam T   Floating-point type.
  * @tparam dim Dimension of the vector.
@@ -85,7 +85,7 @@ typedef MatXf<2> Mat2Xf;
 typedef MatXf<3> Mat3Xf;
 
 /**
- * @brief Fixed size matrix.
+ * @brief Fixed-size matrix.
  *
  * @note Vectors are stored along columns.
  *

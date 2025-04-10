@@ -22,8 +22,8 @@
 #ifndef DGD_GEOMETRY_2D_ELLIPSE_H_
 #define DGD_GEOMETRY_2D_ELLIPSE_H_
 
-#include <cassert>
 #include <cmath>
+#include <stdexcept>
 
 #include "dgd/data_types.h"
 #include "dgd/geometry/convex_set.h"
@@ -55,8 +55,8 @@ class Ellipse : public ConvexSet<2> {
 
 inline Ellipse::Ellipse(Real hlx, Real hly, Real margin)
     : ConvexSet<2>(), hlx2_(hlx * hlx), hly2_(hly * hly), margin_(margin) {
-  assert((hlx > Real(0.0)) && (hly > Real(0.0)));
-  assert(margin >= Real(0.0));
+  if ((hlx <= 0.0) || (hly <= 0.0) || (margin < 0.0))
+    throw std::domain_error("Invalid axis lengths or margin");
   SetInradius(std::min(hlx, hly) + margin);
 }
 

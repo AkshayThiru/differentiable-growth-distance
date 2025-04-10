@@ -22,7 +22,7 @@
 #ifndef DGD_GEOMETRY_XD_SPHERE_H_
 #define DGD_GEOMETRY_XD_SPHERE_H_
 
-#include <cassert>
+#include <stdexcept>
 
 #include "dgd/data_types.h"
 #include "dgd/geometry/convex_set.h"
@@ -42,7 +42,7 @@ class Sphere : public ConvexSet<dim> {
    *
    * @param radius Radius.
    */
-  Sphere(Real radius);
+  explicit Sphere(Real radius);
 
   ~Sphere() {};
 
@@ -55,8 +55,8 @@ class Sphere : public ConvexSet<dim> {
 template <int dim>
 inline Sphere<dim>::Sphere(Real radius)
     : ConvexSet<dim>(radius), radius_(radius) {
-  static_assert((dim == 2) || (dim == 3), "Incompatible dim!");
-  assert(radius > Real(0.0));
+  static_assert((dim == 2) || (dim == 3), "Incompatible dim");
+  if (radius <= 0.0) throw std::domain_error("Radius is nonpositive");
 }
 
 template <int dim>

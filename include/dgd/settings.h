@@ -38,17 +38,20 @@ struct SolverSettings {
   /**
    * @brief Minimum distance between the centers of the convex sets (\f$> 0\f$).
    *
-   * If the positions of the two convex sets are \f$p_1\f$ and \f$p_2\f$
+   * If the center positions of the two convex sets are \f$p_1\f$ and \f$p_2\f$
    * (corresponding to the rigid body transformations), and \f$|p_1 - p_2| <\f$
-   * min_center_dist, then the growth distance is set to 0.
+   * min_center_dist, then the growth distance is set to zero.
    */
-  Real min_center_dist{1e-6};
+  Real min_center_dist{kEpsSqrt};
 
   /**
    * @brief Relative tolerance between the upper and lower bounds of the growth
    * distance (\f$= 1 + \epsilon\f$).
    *
-   * The convergence criterion is \f$lb \leq ub \leq\f$ (rel_tol) \f$lb\f$.
+   * The convergence criterion is
+   * \f[
+   * lb \leq ub \leq (\text{rel_tol}) \ lb.
+   * \f]
    */
   Real rel_tol{Real(1.0) + kEpsSqrt};
 };

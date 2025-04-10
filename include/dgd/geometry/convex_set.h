@@ -22,7 +22,7 @@
 #ifndef DGD_GEOMETRY_CONVEX_SET_H_
 #define DGD_GEOMETRY_CONVEX_SET_H_
 
-#include <cassert>
+#include <stdexcept>
 
 #include "dgd/data_types.h"
 
@@ -33,7 +33,8 @@ namespace dgd {
  *
  * @attention The convex set must be a compact and solid set (i.e., closed,
  * bounded, and with a nonempty interior). Also, the origin must be in
- * the interior of the set.
+ * the interior of the set. The origin is the center point of the convex set
+ * in its local frame.
  *
  * @tparam dim Dimension of the convex set (2 or 3).
  */
@@ -61,7 +62,7 @@ class ConvexSet {
    * Radius of a ball that is centered at the origin and contained in the set.
    * Any number greater than 0 and less than the Chebyshev radius will work.
    * However, larger values can help prevent singularities in simplex
-   * computations.
+   * computations and enable faster convergence.
    */
   Real inradius_;
 
@@ -72,7 +73,7 @@ class ConvexSet {
   virtual ~ConvexSet() {}
 
   /**
-   * @brief Implements the support function.
+   * @brief Implements the support function in the local frame.
    *
    * Implements the support function for the convex set \f$C\f$, which is given
    * by: \f{align*}{
@@ -114,7 +115,7 @@ class ConvexSet {
   /**
    * @brief Sets the inradius.
    *
-   * @param[in] inradius Inradius (\f$> 0\f$).
+   * @param inradius Inradius (\f$> 0\f$).
    * @see inradius_
    */
   void SetInradius(Real inradius);
@@ -125,7 +126,7 @@ inline ConvexSet<dim>::ConvexSet() : ConvexSet(kEps) {}
 
 template <int dim>
 inline ConvexSet<dim>::ConvexSet(Real inradius) : inradius_(inradius) {
-  assert(inradius > Real(0.0));
+  if (inradius <= 0.0) throw std::domain_error("Inradius is not positive");
 }
 
 template <int dim>
@@ -140,7 +141,7 @@ inline Real ConvexSet<dim>::GetInradius() const {
 
 template <int dim>
 inline void ConvexSet<dim>::SetInradius(Real inradius) {
-  assert(inradius > Real(0.0));
+  if (inradius <= 0.0) throw std::domain_error("Inradius is not positive");
   inradius_ = inradius;
 }
 

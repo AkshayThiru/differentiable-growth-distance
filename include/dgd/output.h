@@ -58,6 +58,10 @@ enum class SolutionStatus : uint8_t {
 /**
  * @brief Solver output struct.
  *
+ * @attention When not using warm start, a SolverOutput instance can be shared
+ * across different pairs of convex sets. When using warm start, each pair
+ * should use a different object.
+ *
  * @tparam dim Dimension of the convex sets.
  */
 template <int dim>
@@ -70,9 +74,9 @@ struct SolverOutput {
    * @attention When the simplex points from the previous time step are
    * available, they can be used to warm start the growth distance algorithm.
    *
-   * @note The simplex points are stored in the untransformed reference frame
-   * of the convex set, i.e., the support points returned by the support
-   * function are directly stored.
+   * @note The simplex points are stored in the local reference frame of the
+   * convex set, i.e., the support points returned by the support function are
+   * directly stored.
    */
   ///@{
   Matf<dim, dim> s1{Matf<dim, dim>::Zero()};
@@ -85,9 +89,9 @@ struct SolverOutput {
   Vecf<dim> bc{Vecf<dim>::Zero()};
 
   /**
-   * @brief The normal vector of an optimal hyperplane.
+   * @brief The normal vector of an optimal hyperplane (dual optimal solution).
    *
-   * @attention The normal vector is in the transformed frame of reference.
+   * @attention The normal vector is in the world frame of reference.
    */
   Vecf<dim> normal{Vecf<dim>::Zero()};
 
@@ -131,11 +135,11 @@ struct SolutionError {
    *
    * The error is given by
    * \f[
-   * \texttt{primal_dual_rel_gap}
-   * = \left|\frac{\texttt{growth_dist_ub}}{\texttt{growth_dist_lb}} - 1\right|.
+   * \text{primal_dual_rel_gap}
+   * = \left|\frac{\text{growth_dist_ub}}{\text{growth_dist_lb}} - 1\right|.
    * \f]
    * When the growth distance algorithm converges, this error is less than the
-   * specified value of \f$\texttt{rel_tol}\f$.
+   * specified value of rel_tol.
    */
   Real primal_dual_rel_gap;
 
@@ -146,8 +150,8 @@ struct SolutionError {
    * set support points and barycentric coordinates. Then, the primal
    * feasibility error is given by
    * \f[
-   * \texttt{primal_feas_err}
-   * = | p_{12} + cp_{12} \cdot \texttt{growth_dist_ub}|_2,
+   * \text{primal_feas_err}
+   * = | p_{12} + cp_{12} \cdot \text{growth_dist_ub}|_2,
    * \f]
    * where \f$p_{12}\f$ and \f$cp_{12}\f$ are the center position and contact
    * point (wrt the center) on the Minkowski difference set.

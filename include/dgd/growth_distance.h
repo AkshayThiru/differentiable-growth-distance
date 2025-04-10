@@ -84,9 +84,9 @@ inline Real UpdateSimplex(const Vec2f& sp, const Vec2f& sp1, const Vec2f& sp2,
   out.s1.col(idx) = sp1;
   out.s2.col(idx) = sp2;
 
-  const Real len{simplex(0, 1) - simplex(0, 0) + kEps};
-  out.bc(0) = (simplex(0, 1) + kEps / Real(2.0)) / len;
-  out.bc(1) = (-simplex(0, 0) + kEps / Real(2.0)) / len;
+  out.bc(0) = (simplex(0, 1) + kEps / Real(2.0));
+  out.bc(1) = (-simplex(0, 0) + kEps / Real(2.0));
+  out.bc = out.bc / out.bc.sum();
 
   return simplex.row(1) * out.bc;
 }
@@ -102,10 +102,10 @@ inline void InitializeSimplex(Vec2f& normal, Matf<2, 2>& simplex,
                               SolverOutput<2>& out) {
   normal = -Vec2f::UnitY();
 
-  simplex.col(0) = -out.inradius * Vec2f::UnitX();
-  simplex.col(1) = out.inradius * Vec2f::UnitX();
+  simplex.col(0) = Vec2f(-out.inradius, 0.0);
+  simplex.col(1) = Vec2f(out.inradius, 0.0);
 
-  out.bc = Real(0.5) * Vec2f::Ones();
+  out.bc = Vec2f::Constant(0.5);
 }
 
 }  // namespace
@@ -113,10 +113,8 @@ inline void InitializeSimplex(Vec2f& normal, Matf<2, 2>& simplex,
 /**
  * @brief Growth distance algorithm for 2D convex sets.
  *
- * @param[in]     set1       Convex set 1.
- * @param[in]     tf1        Rigid body transformation for convex set 1.
- * @param[in]     set2       Convex set 2.
- * @param[in]     tf2        Rigid body transformation for convex set 2.
+ * @param[in]     set1,set2  Convex sets.
+ * @param[in]     tf1,tf2    Rigid body transformations for the convex sets.
  * @param[in]     settings   Solver settings.
  * @param[in,out] out        Solver output.
  * @param         warm_start Use previous solver output to warm start current
@@ -128,7 +126,7 @@ Real GrowthDistance(const C1* set1, const Transform2f& tf1, const C2* set2,
                     const Transform2f& tf2, const SolverSettings& settings,
                     SolverOutput<2>& out, bool warm_start = false) {
   static_assert((C1::Dimension() == 2) && (C2::Dimension() == 2),
-                "Convex sets are not two-dimensional!");
+                "Convex sets are not two-dimensional");
 
   if (!warm_start) out.inradius = set1->GetInradius() + set2->GetInradius();
   out.iter = 0;
@@ -152,6 +150,7 @@ Real GrowthDistance(const C1* set1, const Transform2f& tf1, const C2* set2,
   Matf<2, 2> simplex;
 
   InitializeSimplex(normal, simplex, out);
+  // Warm-start.
   if (warm_start && (out.status == SolutionStatus::kOptimal)) {
     const Matf<2, 2> s1_{out.s1};
     const Matf<2, 2> s2_{out.s2};
@@ -205,7 +204,7 @@ Real GrowthDistance(const C1* set1, const Transform2f& tf1, const C2* set2,
 
   out.growth_dist_lb = -cdist / lb;
   out.growth_dist_ub = -cdist / ub;
-  // Transform normal vector.
+  // Transform normal vector to world frame.
   out.normal = rot.transpose() * out.normal;
 
 #ifndef DONOT_PRINT_DIAGNOSTICS
@@ -239,7 +238,7 @@ struct Simplex {
 
   /**
    * @name Convex set support points
-   * @brief Support points for the convex sets in the untransformed coordinates.
+   * @brief Support points for the convex sets in the local coordinates.
    */
   ///@{
   Vec3f sp1;
@@ -324,7 +323,7 @@ inline void ComputeSupportCoordinates(Simplex& sx) {
  */
 inline Real UpdateSimplex(Simplex& sx, SolverOutput<3>& out) {
   ComputeSupportCoordinates(sx);
-  // Replace the exiting simplex point with the support point.
+  // Compute one iteration of the simplex algorithm.
   int exiting_idx{0};
   Real value{1.0};
   for (int i = 0; i < 3; ++i)
@@ -332,6 +331,7 @@ inline Real UpdateSimplex(Simplex& sx, SolverOutput<3>& out) {
       value = out.bc(i) / sx.bc(i);
       exiting_idx = i;
     }
+  // Replace the exiting simplex point with the support point.
   sx.s.col(exiting_idx) = sx.sp;
   out.s1.col(exiting_idx) = sx.sp1;
   out.s2.col(exiting_idx) = sx.sp2;
@@ -347,12 +347,12 @@ inline Real UpdateSimplex(Simplex& sx, SolverOutput<3>& out) {
 inline void InitializeSimplex(Simplex& sx, SolverOutput<3>& out) {
   sx.n = -Vec3f::UnitZ();
 
-  sx.s.col(0) = out.inradius * Vec3f{0.5, 0.5, 0.0};
-  sx.s.col(1) = out.inradius * Vec3f{-0.5, 0.5, 0.0};
-  sx.s.col(2) = -out.inradius * Vec3f::UnitY();
+  sx.s.col(0) = out.inradius * Vec3f(0.5, 0.5, 0.0);
+  sx.s.col(1) = out.inradius * Vec3f(-0.5, 0.5, 0.0);
+  sx.s.col(2) = Vec3f(0.0, -out.inradius, 0.0);
   sx.area = Real(1.5) * out.inradius * out.inradius;
 
-  out.bc = Real(1.0 / 3.0) * Vec3f::Ones();
+  out.bc = Vec3f::Constant(Real(1.0 / 3.0));
 }
 
 }  // namespace
@@ -360,10 +360,8 @@ inline void InitializeSimplex(Simplex& sx, SolverOutput<3>& out) {
 /**
  * @brief Growth distance algorithm for 3D convex sets.
  *
- * @param[in]     set1       Convex set 1.
- * @param[in]     tf1        Rigid body transformation for convex set 1.
- * @param[in]     set2       Convex set 2.
- * @param[in]     tf2        Rigid body transformation for convex set 2.
+ * @param[in]     set1,set2  Convex sets.
+ * @param[in]     tf1,tf2    Rigid body transformations for the convex sets.
  * @param[in]     settings   Solver settings.
  * @param[in,out] out        Solver output.
  * @param         warm_start Use previous solver output to warm start current
@@ -375,7 +373,7 @@ Real GrowthDistance(const C1* set1, const Transform3f& tf1, const C2* set2,
                     const Transform3f& tf2, const SolverSettings& settings,
                     SolverOutput<3>& out, bool warm_start = false) {
   static_assert((C1::Dimension() == 3) && (C2::Dimension() == 3),
-                "Convex sets are not three-dimensional!");
+                "Convex sets are not three-dimensional");
 
   if (!warm_start) out.inradius = set1->GetInradius() + set2->GetInradius();
   out.iter = 0;
@@ -397,6 +395,7 @@ Real GrowthDistance(const C1* set1, const Transform3f& tf1, const C2* set2,
   Simplex sx;
 
   InitializeSimplex(sx, out);
+  // Warm-start.
   if (warm_start && (out.status == SolutionStatus::kOptimal)) {
     const Matf<3, 3> s1_{out.s1};
     const Matf<3, 3> s2_{out.s2};
@@ -452,7 +451,7 @@ Real GrowthDistance(const C1* set1, const Transform3f& tf1, const C2* set2,
 
   out.growth_dist_lb = -cdist / lb;
   out.growth_dist_ub = -cdist / ub;
-  // Transform the normal vector.
+  // Transform the normal vector to world frame.
   out.normal = rot.transpose() * out.normal;
 
 #ifndef DONOT_PRINT_DIAGNOSTICS
@@ -466,10 +465,18 @@ Real GrowthDistance(const C1* set1, const Transform3f& tf1, const C2* set2,
  * ADDITIONAL UTILITY FUNCTIONS                           *
  **********************************************************/
 
+/**
+ * @brief Gets the primal-dual relative gap and the primal feasibility error.
+ *
+ * @tparam dim     Dimension of the convex sets.
+ * @param  tf1,tf2 Rigid body transformations for the convex sets.
+ * @param  out     Solver output.
+ * @return Solution error.
+ */
 template <int dim>
 SolutionError GetSolutionError(const Transformf<dim>& tf1,
                                const Transformf<dim>& tf2,
-                               SolverOutput<dim>& out) {
+                               const SolverOutput<dim>& out) {
   SolutionError err;
 
   const Vecf<dim> p12{tf1.template block<dim, 1>(0, dim) -

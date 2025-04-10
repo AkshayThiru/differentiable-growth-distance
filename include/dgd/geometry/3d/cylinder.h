@@ -22,8 +22,8 @@
 #ifndef DGD_GEOMETRY_3D_CYLINDER_H_
 #define DGD_GEOMETRY_3D_CYLINDER_H_
 
-#include <cassert>
 #include <cmath>
+#include <stdexcept>
 
 #include "dgd/data_types.h"
 #include "dgd/geometry/convex_set.h"
@@ -33,7 +33,7 @@ namespace dgd {
 /**
  * @brief Axis-aligned 3D cylinder class.
  *
- * @note The cylinder is oriented along the x-axis.
+ * @note The cylinder axis is oriented along the x-axis.
  */
 class Cylinder : public ConvexSet<3> {
  public:
@@ -58,8 +58,8 @@ class Cylinder : public ConvexSet<3> {
 
 inline Cylinder::Cylinder(Real hlx, Real radius, Real margin)
     : ConvexSet<3>(), hlx_(hlx), radius_(radius), margin_(margin) {
-  assert((hlx > Real(0.0)) && (radius > Real(0.0)));
-  assert(margin >= Real(0.0));
+  if ((hlx <= 0.0) || (radius <= 0.0) || (margin < 0.0))
+    throw std::domain_error("Invalid axis length, radius, or margin");
   SetInradius(std::min(hlx, radius) + margin);
 }
 

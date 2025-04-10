@@ -22,9 +22,9 @@
 #ifndef DGD_UTILS_H_
 #define DGD_UTILS_H_
 
-#include <cassert>
 #include <cmath>
 #include <random>
+#include <stdexcept>
 
 #include "dgd/data_types.h"
 
@@ -53,7 +53,7 @@ inline void SetRandomSeed() { gen.seed(rd()); }
  * @return Random real number.
  */
 inline Real Random(Real range_from, Real range_to) {
-  assert(range_from < range_to);
+  if (range_from >= range_to) throw std::range_error("Invalid range");
   std::uniform_real_distribution<Real> dis(range_from, range_to);
   return dis(gen);
 }
@@ -89,7 +89,7 @@ inline void RotationToZAxis(const Vec3f& n, Rot3f& rot) {
     axis = axis / norm;
     rot = Real(2.0) * axis * axis.transpose() - Rot3f::Identity();
   } else
-    rot = Vec3f{1.0, -1.0, -1.0}.asDiagonal();
+    rot = Vec3f(1.0, -1.0, -1.0).asDiagonal();
 }
 ///@}
 
@@ -122,8 +122,7 @@ inline void RandomRotation(Rot2f& rot) {
 }
 
 inline void RandomRotation(Rot3f& rot) {
-  Vec3f euler;
-  euler << Random(kPi), Random(kPi / Real(2.0)), Random(kPi);
+  Vec3f euler{Random(kPi), Random(kPi / Real(2.0)), Random(kPi)};
   EulerToRotation(euler, rot);
 }
 ///@}
@@ -140,7 +139,8 @@ template <int dim>
 inline void RandomRigidBodyTransform(const Vecf<dim>& range_from,
                                      const Vecf<dim>& range_to,
                                      Transformf<dim>& tf) {
-  assert((range_from.array() < range_to.array()).all());
+  if ((range_from.array() >= range_to.array()).any())
+    throw std::range_error("Invalid range");
   Rotf<dim> rot;
   RandomRotation(rot);
   tf.template block<dim, dim>(0, 0) = rot;
@@ -154,15 +154,15 @@ inline void RandomRigidBodyTransform(const Vecf<dim>& range_from,
  * range.
  *
  * @tparam     dim        Dimension.
- * @param      range_from Lower bound of position.
- * @param      range_to   Upper bound of position.
+ * @param[in]  range_from Lower bound of position.
+ * @param[in]  range_to   Upper bound of position.
  * @param[out] tf         Transformation matrix.
  */
 template <int dim>
 inline void RandomRigidBodyTransform(Real range_from, Real range_to,
                                      Transformf<dim>& tf) {
-  RandomRigidBodyTransform<dim>(range_from * Vecf<dim>::Ones(),
-                                range_to * Vecf<dim>::Ones(), tf);
+  RandomRigidBodyTransform<dim>(Vecf<dim>::Constant(range_from),
+                                Vecf<dim>::Constant(range_to), tf);
 }
 
 }  // namespace dgd

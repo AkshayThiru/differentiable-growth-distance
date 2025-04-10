@@ -91,7 +91,7 @@ inline int GrahamScan(const std::vector<Vec2f>& pts, std::vector<Vec2f>& vert) {
     vert.push_back(p);
   }
   assert(vert.size() >= 2);
-  return vert.size();
+  return static_cast<int>(vert.size());
 }
 
 }  // namespace dgd

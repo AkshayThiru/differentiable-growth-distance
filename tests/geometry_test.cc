@@ -1,11 +1,17 @@
 #include <gtest/gtest.h>
 
-#include <Eigen/Core>
+#include <cassert>
 #include <cmath>
 
 #include "dgd/data_types.h"
+#include "dgd/geometry/2d/ellipse.h"
+#include "dgd/geometry/2d/rectangle.h"
+#include "dgd/geometry/3d/cone.h"
+#include "dgd/geometry/3d/cuboid.h"
+#include "dgd/geometry/3d/cylinder.h"
+#include "dgd/geometry/3d/ellipsoid.h"
+#include "dgd/geometry/xd/capsule.h"
 #include "dgd/growth_distance.h"
-#include "dgd/sets.h"
 
 namespace {
 
@@ -15,32 +21,32 @@ void UniformCirclePoints(Mat2Xf& pts, int size) {
   assert(size >= 2);
   pts.resize(2, size);
 
-  const VecXf ang{VecXf::LinSpaced(size, 0.0, 2.0 * kPi)};
-  pts.row(0) = ang.transpose().array().cos();
-  pts.row(1) = ang.transpose().array().sin();
+  const VecXf ang{VecXf::LinSpaced(size + 1, 0.0, 2.0 * kPi)};
+  pts.row(0) = ang.head(size).transpose().array().cos();
+  pts.row(1) = ang.head(size).transpose().array().sin();
 }
 
-void UniformSpherePoints(Mat3Xf& pts, int xy_size, int z_size,
+void UniformSpherePoints(Mat3Xf& pts, int size_xy, int size_z,
                          Real z_off = 0.0) {
-  assert((xy_size >= 2) && (z_size >= 2));
-  pts.resize(3, xy_size * z_size);
+  assert((size_xy >= 2) && (size_z >= 2));
+  pts.resize(3, size_xy * size_z);
 
-  const VecXf xy_ang{VecXf::LinSpaced(xy_size, 0.0, 2.0 * kPi)};
-  Mat2Xf xy_pts(2, xy_size);
-  xy_pts.row(0) = xy_ang.transpose().array().cos();
-  xy_pts.row(1) = xy_ang.transpose().array().sin();
+  const VecXf ang_xy{VecXf::LinSpaced(size_xy + 1, 0.0, 2.0 * kPi)};
+  Mat2Xf pts_xy(2, size_xy);
+  pts_xy.row(0) = ang_xy.head(size_xy).transpose().array().cos();
+  pts_xy.row(1) = ang_xy.head(size_xy).transpose().array().sin();
 
-  const VecXf z_ang{
-      VecXf::LinSpaced(z_size, -kPi / 2.0 + z_off, kPi / 2.0 - z_off)};
-  for (int i = 0; i < z_size; ++i) {
-    pts.block(0, xy_size * i, 2, xy_size) = xy_pts * std::cos(z_ang(i));
-    pts.block(2, xy_size * i, 1, xy_size) =
-        VecXf::Constant(xy_size, std::sin(z_ang(i))).transpose();
+  const VecXf ang_z{VecXf::LinSpaced(size_z, -kPi / Real(2.0) + z_off,
+                                     kPi / Real(2.0) - z_off)};
+  for (int i = 0; i < size_z; ++i) {
+    pts.block(0, size_xy * i, 2, size_xy) = pts_xy * std::cos(ang_z(i));
+    pts.block(2, size_xy * i, 1, size_xy) =
+        VecXf::Constant(size_xy, std::sin(ang_z(i))).transpose();
   }
 }
 
 // Assertion functions
-const Eigen::IOFormat kVecFmt(4, Eigen::DontAlignCols, ", ", "\n", "[", "]");
+const Real kTol{kEpsSqrt};
 
 template <int dim>
 bool AssertVectorEQ(const Vecf<dim>& v1, const Vecf<dim>& v2, Real tol) {
@@ -48,12 +54,10 @@ bool AssertVectorEQ(const Vecf<dim>& v1, const Vecf<dim>& v2, Real tol) {
 }
 
 // Support function tests
-const Real kTol{kEpsSqrt};
-
 // 2D convex set tests
 //  Ellipse test
 TEST(EllipseTest, SupportFunction) {
-  const Real hlx{3.0}, hly{2.0}, margin{0.1};
+  const Real hlx{3.0}, hly{2.0}, margin{0.25};
   auto set{Ellipse(hlx, hly, margin)};
 
   EXPECT_EQ(set.GetInradius(), hly + margin);
@@ -61,7 +65,7 @@ TEST(EllipseTest, SupportFunction) {
   Real sv;
   Vec2f sp, sp_, n;
   Mat2Xf pts;
-  UniformCirclePoints(pts, 17);
+  UniformCirclePoints(pts, 16);
   const Vec2f len(hlx, hly);
   for (int i = 0; i < pts.cols(); ++i) {
     n = (pts.col(i).array() / len.array()).matrix().normalized();
@@ -74,7 +78,7 @@ TEST(EllipseTest, SupportFunction) {
 
 //  Rectangle test
 TEST(RectangleTest, SupportFunction) {
-  const Real hlx{3.0}, hly{2.0}, margin{0.1};
+  const Real hlx{3.0}, hly{2.0}, margin{0.25};
   auto set{Rectangle(hlx, hly, margin)};
 
   EXPECT_EQ(set.GetInradius(), hly + margin);
@@ -95,7 +99,7 @@ TEST(RectangleTest, SupportFunction) {
 // 3D convex set tests
 //  Cone test
 TEST(ConeTest, SupportFunction) {
-  const Real ha{kPi / 6.0}, radius{1.0}, margin{0.1};
+  const Real ha{kPi / 6.0}, radius{1.0}, margin{0.25};
   const Real height{radius / std::tan(ha)};
   const Real rho{height / (Real(1.0) + Real(1.0) / std::sin(ha))};
   auto set{Cone(radius, height, margin)};
@@ -106,9 +110,9 @@ TEST(ConeTest, SupportFunction) {
   Real sv;
   Vec3f sp, sp_, n;
   Mat3Xf pts;
-  // Using z_size = 9 ensures that normal is not orthogonal
+  // Using size_z = 9 ensures that normal is not orthogonal
   // to the cone surface (for ha = 30 deg).
-  UniformSpherePoints(pts, 17, 9, 1e-5);
+  UniformSpherePoints(pts, 16, 9, Real(1e-5));
   for (int i = 0; i < pts.cols(); ++i) {
     n = pts.col(i);
     if (n.topRows<2>().norm() * std::tan(ha) < n(2))
@@ -126,7 +130,7 @@ TEST(ConeTest, SupportFunction) {
 
 // Cuboid test
 TEST(CuboidTest, SupportFunction) {
-  const Real hlx{3.0}, hly{2.0}, hlz{1.5}, margin{0.1};
+  const Real hlx{3.0}, hly{2.0}, hlz{1.5}, margin{0.25};
   auto set{Cuboid(hlx, hly, hlz, margin)};
 
   EXPECT_EQ(set.GetInradius(), hlz + margin);
@@ -134,8 +138,8 @@ TEST(CuboidTest, SupportFunction) {
   Real sv;
   Vec3f sp, sp_, n;
   for (int i = 0; i < 8; ++i) {
-    n = Vec3f(std::pow(-1.0, i % 2), std::pow(-1.0, (i / 2) % 2),
-              std::pow(-1.0, (i / 4) % 2));
+    n = Vec3f(Real(std::pow(-1.0, i % 2)), Real(std::pow(-1.0, (i / 2) % 2)),
+              Real(std::pow(-1.0, (i / 4) % 2)));
     sp_ = Vec3f(hlx * n(0), hly * n(1), hlz * n(2));
     n.normalize();
     sp_ += margin * n;
@@ -147,7 +151,7 @@ TEST(CuboidTest, SupportFunction) {
 
 // Cylinder test
 TEST(CylinderTest, SupportFunction) {
-  const Real hlx{2.0}, radius{2.5}, margin{0.1};
+  const Real hlx{2.0}, radius{2.5}, margin{0.25};
   auto set{Cylinder(hlx, radius, margin)};
 
   EXPECT_EQ(set.GetInradius(), hlx + margin);
@@ -155,13 +159,13 @@ TEST(CylinderTest, SupportFunction) {
   Real sv;
   Vec3f sp, sp_, n;
   Mat2Xf pts;
-  UniformCirclePoints(pts, 17);
+  UniformCirclePoints(pts, 16);
   for (int i = 0; i < 2; ++i)
     for (int j = 0; j < pts.cols(); ++j) {
-      n(0) = std::pow(-1.0, i);
+      n(0) = Real(std::pow(-1.0, i));
       n.bottomRows<2>() = pts.col(j);
       n.normalize();
-      sp_(0) = hlx * std::pow(-1.0, i);
+      sp_(0) = hlx * Real(std::pow(-1.0, i));
       sp_.bottomRows<2>() = radius * pts.col(j);
       sp_ += margin * n;
       sv = set.SupportFunction(n, sp);
@@ -172,7 +176,7 @@ TEST(CylinderTest, SupportFunction) {
 
 //  Ellipsoid test
 TEST(EllipsoidTest, SupportFunction) {
-  const Real hlx{3.0}, hly{2.0}, hlz{1.5}, margin{0.1};
+  const Real hlx{3.0}, hly{2.0}, hlz{1.5}, margin{0.25};
   auto set{Ellipsoid(hlx, hly, hlz, margin)};
 
   EXPECT_EQ(set.GetInradius(), hlz + margin);
@@ -180,7 +184,7 @@ TEST(EllipsoidTest, SupportFunction) {
   Real sv;
   Vec3f sp, sp_, n;
   Mat3Xf pts;
-  UniformSpherePoints(pts, 17, 9);
+  UniformSpherePoints(pts, 16, 9);
   const Vec3f len(hlx, hly, hlz);
   for (int i = 0; i < pts.cols(); ++i) {
     n = (pts.col(i).array() / len.array()).matrix().normalized();
@@ -206,16 +210,16 @@ TYPED_TEST_SUITE(CapsuleTest, CapsuleTypes);
 
 TYPED_TEST(CapsuleTest, SupportFunction) {
   constexpr int dim{TypeParam::Dimension()};
-  const Real hlx{2.0}, radius{2.5}, margin{0.1};
+  const Real hlx{2.0}, radius{2.5}, margin{0.25};
   auto set{TypeParam(hlx, radius, margin)};
 
   EXPECT_EQ(set.GetInradius(), radius + margin);
 
   Mat3Xf pts;
-  // Even number of points avoids zero x-component of normal.
-  const int xy_size{18};
-  UniformSpherePoints(pts, xy_size, 9);
-  const int size = (dim == 2) ? xy_size : static_cast<int>(pts.cols());
+  // Odd number of points avoids zero x-component of normal.
+  const int size_xy{17};
+  UniformSpherePoints(pts, size_xy, 9);
+  const int size = (dim == 2) ? size_xy : static_cast<int>(pts.cols());
 
   Real sv;
   Vecf<dim> sp, sp_, n;

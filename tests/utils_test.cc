@@ -28,7 +28,7 @@ TEST(RotationToZAxisTest, TwoDim) {
     EXPECT_TRUE(rot.isUnitary(kTol));
     EXPECT_NEAR(rot.determinant(), 1.0, kTol);
     err = (rot * n - Vec2f::UnitY()).lpNorm<Eigen::Infinity>();
-    EXPECT_NEAR(err, 0.0, kTol);
+    ASSERT_NEAR(err, 0.0, kTol);
   }
 }
 
@@ -40,7 +40,7 @@ TEST(RotationToZAxisTest, ThreeDim) {
   Vec3f n;
   Rot3f rot;
   for (int i = 0; i < nsamples; ++i) {
-    ang_y = Random(kPi / 2.0);
+    ang_y = Random(kPi / Real(2.0));
     ang_z = Random(kPi);
     n = Vec3f(std::cos(ang_z) * std::cos(ang_y),
               std::sin(ang_z) * std::cos(ang_y), std::sin(ang_y));
@@ -49,7 +49,7 @@ TEST(RotationToZAxisTest, ThreeDim) {
     EXPECT_TRUE(rot.isUnitary(kTol));
     EXPECT_NEAR(rot.determinant(), 1.0, kTol);
     err = (rot * n - Vec3f::UnitZ()).lpNorm<Eigen::Infinity>();
-    EXPECT_NEAR(err, 0.0, kTol);
+    ASSERT_NEAR(err, 0.0, kTol);
   }
 
   n = -Vec3f::UnitZ();
@@ -58,7 +58,7 @@ TEST(RotationToZAxisTest, ThreeDim) {
   EXPECT_TRUE(rot.isUnitary(kTol));
   EXPECT_NEAR(rot.determinant(), 1.0, kTol);
   err = (rot * n - Vec3f::UnitZ()).lpNorm<Eigen::Infinity>();
-  EXPECT_NEAR(err, 0.0, kTol);
+  ASSERT_NEAR(err, 0.0, kTol);
 }
 
 }  // namespace

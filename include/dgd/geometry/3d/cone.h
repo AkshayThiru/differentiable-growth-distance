@@ -22,8 +22,8 @@
 #ifndef DGD_GEOMETRY_3D_CONE_H_
 #define DGD_GEOMETRY_3D_CONE_H_
 
-#include <cassert>
 #include <cmath>
+#include <stdexcept>
 
 #include "dgd/data_types.h"
 #include "dgd/geometry/convex_set.h"
@@ -67,8 +67,8 @@ class Cone : public ConvexSet<3> {
 
 inline Cone::Cone(Real radius, Real height, Real margin)
     : ConvexSet<3>(), r_(radius), h_(height), margin_(margin) {
-  assert((radius > Real(0.0)) && (height > Real(0.0)));
-  assert(margin >= Real(0.0));
+  if ((radius <= 0.0) || (height <= 0.0) || (margin < 0.0))
+    throw std::domain_error("Invalid radius, height, or margin");
   sha_ = r_ / std::sqrt(r_ * r_ + h_ * h_);
   rho_ = (std::sqrt(r_ * r_ + h_ * h_) * r_ - r_ * r_) / h_;
   SetInradius(rho_ + margin);

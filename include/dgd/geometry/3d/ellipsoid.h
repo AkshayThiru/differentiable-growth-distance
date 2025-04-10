@@ -60,8 +60,8 @@ inline Ellipsoid::Ellipsoid(Real hlx, Real hly, Real hlz, Real margin)
       hly2_(hly * hly),
       hlz2_(hlz * hlz),
       margin_(margin) {
-  assert((hlx > Real(0.0)) && (hly > Real(0.0)) && (hlz > Real(0.0)));
-  assert(margin >= Real(0.0));
+  if ((hlx <= 0.0) || (hly <= 0.0) || (hlz <= 0.0) || (margin < 0.0))
+    throw std::domain_error("Invalid axis lengths or margin");
   SetInradius(std::min({hlx, hly, hlz}) + margin);
 }
 

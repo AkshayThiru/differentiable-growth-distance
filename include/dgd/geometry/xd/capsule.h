@@ -22,8 +22,8 @@
 #ifndef DGD_GEOMETRY_XD_CAPSULE_H_
 #define DGD_GEOMETRY_XD_CAPSULE_H_
 
-#include <cassert>
 #include <cmath>
+#include <stdexcept>
 
 #include "dgd/data_types.h"
 #include "dgd/geometry/convex_set.h"
@@ -67,9 +67,9 @@ inline Capsule<dim>::Capsule(Real hlx, Real radius, Real margin)
       radius_(radius),
       margin_(margin) {
   static_assert((dim == 2) || (dim == 3),
-                "Incompatible dimension (not 2 or 3)!");
-  assert((hlx > Real(0.0)) && (radius > Real(0.0)));
-  assert(margin >= Real(0.0));
+                "Incompatible dimension (not 2 or 3)");
+  if ((hlx <= 0.0) || (radius <= 0.0) || (margin < 0.0))
+    throw std::domain_error("Invalid axis length, radius, or margin");
 }
 
 template <int dim>
