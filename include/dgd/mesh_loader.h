@@ -136,13 +136,36 @@ class MeshLoader {
    *    ridge is represented twice, in the ridge records of its two facets.
    *    Note that for a polytope, the nfacet + nvert = nridge + 2.
    *
-   * @param[out] normal Facet normals of the convex hull.
-   * @param[out] offset Facet offsets of the convex hull.
-   * @param[out] graph  Facet adjacency graph.
+   * @param[out] normal         Facet normals of the convex hull.
+   * @param[out] offset         Facet offsets of the convex hull.
+   * @param[out] graph          Facet adjacency graph.
+   * @param[out] interior_point A point in the convex hull interior.
    * @return     true (success) or false (failure).
    */
   bool MakeFacetGraph(std::vector<Vec3f>& normal, std::vector<Real>& offset,
-                      std::vector<int>& graph);
+                      std::vector<int>& graph, Vec3f& interior_point);
+
+  /**
+   * @brief Computes the inradius of a polytope with respect to an interior
+   * point, given its H-rep and an interior point.
+   *
+   * @param  normal         Facet normals of the convex hull.
+   * @param  offset         Facet offsets of the convex hull.
+   * @param  interior_point A point in the convex hull interior.
+   * @return Inradius of the polytope about the interior point.
+   */
+  Real Inradius(const std::vector<Vec3f>& normal,
+                const std::vector<Real>& offset,
+                const Vec3f& interior_point) const;
+
+  /**
+   * @brief Computes an interior point and the inradius (with respect to the
+   * interior point) for the stored vector of points.
+   *
+   * @param[out] interior_point A point in the convex hull interior.
+   * @return     Inradius about the interior point.
+   */
+  Real Inradius(Vec3f& interior_point);
 
   /**
    * @brief Number of points in the mesh.

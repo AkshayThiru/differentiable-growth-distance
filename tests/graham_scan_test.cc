@@ -100,6 +100,17 @@ TEST(GrahamScanTest, TwoDim) {
   EXPECT_EQ(vert[0], Vec2f(0.0, 0.0));
   EXPECT_EQ(vert[1], Vec2f(3.0, 2.0));
   EXPECT_EQ(vert[2], Vec2f(0.0, 4.0));
+
+  // Check inradius.
+  pts.push_back({6.0, 4.0});
+  GrahamScan(pts, vert);
+  ASSERT_EQ(vert.size(), 3);
+  EXPECT_EQ(vert[0], Vec2f(0.0, 0.0));
+  EXPECT_EQ(vert[1], Vec2f(6.0, 4.0));
+  EXPECT_EQ(vert[2], Vec2f(0.0, 4.0));
+
+  Real inradius{PolygonInradius(vert, Vec2f(3.0, 3.0))};
+  EXPECT_NEAR(inradius, std::sqrt(9.0 / 13.0), kTol);
 }
 
 TEST(GrahamScanTest, CcwOrientation) {

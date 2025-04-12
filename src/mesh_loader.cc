@@ -272,7 +272,8 @@ bool MeshLoader::MakeVertexGraph(std::vector<Vec3f>& vert,
 // make facet graph describing convex hull
 bool MeshLoader::MakeFacetGraph(std::vector<Vec3f>& normal,
                                 std::vector<Real>& offset,
-                                std::vector<int>& graph) {
+                                std::vector<int>& graph,
+                                Vec3f& interior_point) {
   normal.clear();
   offset.clear();
   graph.clear();
@@ -329,6 +330,7 @@ bool MeshLoader::MakeFacetGraph(std::vector<Vec3f>& normal,
     graph.resize(szgraph);
     graph[0] = nfacet;
     graph[1] = nridge;
+    for (int i = 0; i < 3; ++i) interior_point(i) = qh->interior_point[i];
 
     std::vector<int> facet_globalid(nfacet);
 
@@ -468,6 +470,30 @@ bool MeshLoader::MakeFacetGraph(std::vector<Vec3f>& normal,
   }
 
   return true;
+}
+
+Real MeshLoader::Inradius(const std::vector<Vec3f>& normal,
+                          const std::vector<Real>& offset,
+                          const Vec3f& interior_point) const {
+  Real max{-kInf}, eqn;
+  for (int i = 0; i < static_cast<int>(normal.size()); ++i) {
+    eqn = normal[i].dot(interior_point) + offset[i];
+    if (eqn >= 0.0)
+      throw std::domain_error("Point is not in the polytope interior");
+    max = std::max(max, eqn);
+  }
+
+  return -max;
+}
+
+Real MeshLoader::Inradius(Vec3f& interior_point) {
+  std::vector<Vec3f> normal;
+  std::vector<Real> offset;
+  std::vector<int> graph;
+  bool valid{MakeFacetGraph(normal, offset, graph, interior_point)};
+  if (!valid) throw std::runtime_error("Qhull error");
+
+  return Inradius(normal, offset, interior_point);
 }
 
 }  // namespace dgd

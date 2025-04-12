@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <stdexcept>
 #include <vector>
 
 #include "dgd/data_types.h"
@@ -92,6 +93,34 @@ inline int GrahamScan(const std::vector<Vec2f>& pts, std::vector<Vec2f>& vert) {
   }
   assert(vert.size() >= 2);
   return static_cast<int>(vert.size());
+}
+
+/**
+ * @brief Computes the inradius with respect to an interior point given the
+ * convex hull vertices and an interior point.
+ *
+ * @param  vert           Convex hull vertices in CCW order.
+ * @param  interior_point A point in the convex hull interior (can be the
+ *                        average of the convex hull vertices).
+ * @return Inradius about the interior point. Inradius is negative when
+ *         interior_point is not in the convex hull.
+ */
+inline Real PolygonInradius(const std::vector<Vec2f>& vert,
+                            const Vec2f& interior_point) {
+  if (vert.size() < 3) return 0.0;
+
+  Vec2f t, n, prev{vert.end()[-1]};
+  Real max{-kInf};
+  for (auto it = vert.begin(); it != vert.end(); ++it) {
+    t = *it - prev;
+    if (t.norm() < kEps)
+      throw std::domain_error("Convex hull contains coincident vertices");
+    n = Vec2f(t(1), -t(0)).normalized();
+    max = std::max(max, n.dot(interior_point - *it));
+    prev = *it;
+  }
+
+  return -max;
 }
 
 }  // namespace dgd

@@ -53,7 +53,7 @@ class Polytope : public ConvexSet<3> {
    * @param thresh   (advanced) Support function threshold (default = 0.75).
    */
   Polytope(const std::vector<Vec3f>& vert, Real margin, Real inradius,
-           Real thresh = 0.75);
+           Real thresh = Real(0.75));
 
   ~Polytope() {};
 

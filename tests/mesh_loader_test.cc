@@ -121,7 +121,9 @@ TEST(MeshLoaderTest, MakeFacetGraph) {
   std::vector<Vec3f> normal;
   std::vector<Real> offset;
   std::vector<int> graph;
-  bool valid{ml.MakeFacetGraph(normal, offset, graph)};
+  Vec3f interior_point;
+  bool valid{ml.MakeFacetGraph(normal, offset, graph, interior_point)};
+  Real inradius{ml.Inradius(normal, offset, interior_point)};
 
   ASSERT_TRUE(valid);
   ASSERT_EQ(normal.size(), nfacet_);
@@ -130,16 +132,21 @@ TEST(MeshLoaderTest, MakeFacetGraph) {
   ASSERT_EQ(graph[1], nridge_);
   ASSERT_EQ(graph.size(), 2 + 2 * nfacet_ + 2 * nridge_);
 
-  Real eqn, max;
+  Real eqn, eqnr, max, maxr{-kInf};
   for (int i = 0; i < nfacet_; ++i) {
+    eqnr = normal[i].dot(interior_point) + offset[i];
+    EXPECT_LE(eqnr, -inradius);
+    maxr = std::max(maxr, eqnr + inradius);
+
     max = -kInf;
     for (int j = 0; j < nvert_; ++j) {
       eqn = normal[i].dot(pts[j]) + offset[i];
       EXPECT_LE(eqn, 0.0);
-      if (eqn > max) max = eqn;
+      max = std::max(max, eqn);
     }
     ASSERT_NEAR(max, 0.0, kTol);
   }
+  ASSERT_NEAR(maxr, 0.0, kTol);
 }
 
 TEST(MeshLoaderTest, SupportFunction) {
