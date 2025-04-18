@@ -479,21 +479,23 @@ Real MeshLoader::Inradius(const std::vector<Vec3f>& normal,
   for (int i = 0; i < static_cast<int>(normal.size()); ++i) {
     eqn = normal[i].dot(interior_point) + offset[i];
     if (eqn >= 0.0)
-      throw std::domain_error("Point is not in the polytope interior");
+      throw std::runtime_error("Point is not in the polytope interior");
     max = std::max(max, eqn);
   }
 
   return -max;
 }
 
-Real MeshLoader::Inradius(Vec3f& interior_point) {
+Real MeshLoader::Inradius(Vec3f& interior_point, bool use_given_ip) {
   std::vector<Vec3f> normal;
   std::vector<Real> offset;
   std::vector<int> graph;
-  bool valid{MakeFacetGraph(normal, offset, graph, interior_point)};
+  Vec3f interior_point_;
+  bool valid{MakeFacetGraph(normal, offset, graph, interior_point_)};
   if (!valid) throw std::runtime_error("Qhull error");
 
-  return Inradius(normal, offset, interior_point);
+  if (use_given_ip) interior_point_ = interior_point;
+  return Inradius(normal, offset, interior_point_);
 }
 
 }  // namespace dgd

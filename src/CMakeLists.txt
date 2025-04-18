@@ -4,10 +4,10 @@ add_library(${LIB_CORE}
 )
 
 target_include_directories(${LIB_CORE}
-  PUBLIC
-    "${PROJECT_SOURCE_DIR}/include/"
   PRIVATE
     "${PROJECT_SOURCE_DIR}/tinyobjloader/"
+  PUBLIC
+    "${PROJECT_SOURCE_DIR}/include/"
 )
 
 target_link_libraries(${LIB_CORE}

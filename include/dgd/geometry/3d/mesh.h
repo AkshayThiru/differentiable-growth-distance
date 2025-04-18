@@ -45,14 +45,14 @@ class Mesh : public ConvexSet<3> {
    * interior and that the inradius is correct.
    *
    * @see MeshLoader::MakeVertexGraph
+   * @see MeshLoader::Inradius
    *
    * @param vert        Vertices of the mesh convex hull.
    * @param graph       Vertex adjacency graph of the mesh convex hull.
    * @param margin      Safety margin.
    * @param inradius    Polytope inradius.
-   * @param thresh      (advanced) Support function threshold (default = 0.9).
-   * @param guess_level (advanced) Guess level for the warm start index
-   *                    (default = 2).
+   * @param thresh      Support function threshold (default = 0.9).
+   * @param guess_level Guess level for the warm start index (default = 2).
    */
   Mesh(const std::vector<Vec3f>& vert, const std::vector<int>& graph,
        Real margin, Real inradius, Real thresh = Real(0.9),
@@ -96,7 +96,6 @@ class Mesh : public ConvexSet<3> {
   std::vector<int> idx_ws0_;  // Initial guesses for idx_ws_.
   Vec3f n_prev_;              // Previous normal vector.
   const Real thresh_;         // Support function warm start threshold.
-  const int guess_level_;     // Support function warm start level.
   int idx_ws_;                // Warm start index for support function.
 };
 
@@ -107,8 +106,7 @@ inline Mesh::Mesh(const std::vector<Vec3f>& vert, const std::vector<int>& graph,
       graph_(graph),
       margin_(margin),
       nvert_(static_cast<int>(vert.size())),
-      thresh_(thresh),
-      guess_level_(guess_level) {
+      thresh_(thresh) {
   if ((inradius <= 0.0) || (margin < 0.0))
     throw std::domain_error("Invalid inradius or margin");
   if ((guess_level < 0) || (guess_level > 2))

@@ -162,10 +162,13 @@ class MeshLoader {
    * @brief Computes an interior point and the inradius (with respect to the
    * interior point) for the stored vector of points.
    *
-   * @param[out] interior_point A point in the convex hull interior.
-   * @return     Inradius about the interior point.
+   * @param[in,out] interior_point A point in the convex hull interior.
+   * @param         use_given_ip   Whether to compute the inradius about
+   *                               interior_point or to compute a new interior
+   *                               point (default = false).
+   * @return        Inradius about the interior point.
    */
-  Real Inradius(Vec3f& interior_point);
+  Real Inradius(Vec3f& interior_point, bool use_given_ip = false);
 
   /**
    * @brief Number of points in the mesh.

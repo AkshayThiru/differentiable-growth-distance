@@ -6,6 +6,7 @@
 
 #include "dgd/data_types.h"
 #include "dgd/geometry/2d/ellipse.h"
+#include "dgd/geometry/2d/polygon.h"
 #include "dgd/geometry/2d/rectangle.h"
 #include "dgd/geometry/3d/cone.h"
 #include "dgd/geometry/3d/cuboid.h"
@@ -14,7 +15,8 @@
 #include "dgd/geometry/3d/mesh.h"
 #include "dgd/geometry/3d/polytope.h"
 #include "dgd/geometry/xd/capsule.h"
-#include "dgd/growth_distance.h"
+#include "dgd/geometry/xd/sphere.h"
+#include "dgd/graham_scan.h"
 #include "dgd/mesh_loader.h"
 #include "dgd/utils.h"
 
@@ -78,6 +80,32 @@ TEST(EllipseTest, SupportFunction) {
     sv = set.SupportFunction(n, sp);
     EXPECT_NEAR(sv, n.dot(sp_), kTol);
     EXPECT_PRED3(AssertVectorEQ<2>, sp, sp_, kTol);
+  }
+}
+
+// Polygon test
+TEST(PolygonTest, SupportFunction) {
+  SetDefaultSeed();
+  const int npts{100};
+  const Real margin{0.0}, len{5.0};
+
+  std::vector<Vec2f> pts, vert;
+  for (int i = 0; i < npts; ++i)
+    pts.push_back(Vec2f(Random(-len, len), Random(-len, len)));
+  GrahamScan(pts, vert);
+  Real inradius{PolygonInradius(vert, Vec2f::Zero())};
+
+  auto set{Polygon(vert, margin, inradius)};
+
+  EXPECT_EQ(set.GetInradius(), inradius + margin);
+
+  Real sv;
+  Vec2f sp, n;
+  Mat2Xf normals;
+  UniformCirclePoints(normals, 16);
+  for (int i = 0; i < normals.cols(); ++i) {
+    sv = set.SupportFunction(normals.col(i), sp);
+    ASSERT_GE(sv, inradius);
   }
 }
 
@@ -235,6 +263,37 @@ TEST(MeshTest, SupportFunction) {
   }
 }
 
+// Polytope test
+TEST(PolytopeTest, SupportFunction) {
+  SetDefaultSeed();
+  const int npts{1000};
+  const Real margin{0.0}, len{5.0};
+
+  std::vector<Real> pts;
+  for (int i = 0; i < 3 * npts; ++i) pts.push_back(Random(-len, len));
+
+  MeshLoader ml{};
+  ml.ProcessPoints(pts);
+  std::vector<Vec3f> vert;
+  std::vector<int> graph;
+  ml.MakeVertexGraph(vert, graph);
+  Vec3f interior_point{Vec3f::Zero()};
+  Real inradius{ml.Inradius(interior_point)};
+
+  auto set{Polytope(vert, margin, inradius)};
+
+  EXPECT_EQ(set.GetInradius(), inradius + margin);
+
+  Real sv;
+  Vec3f sp, n;
+  Mat3Xf normals;
+  UniformSpherePoints(normals, 16, 9);
+  for (int i = 0; i < normals.cols(); ++i) {
+    sv = set.SupportFunction(normals.col(i), sp);
+    ASSERT_GE(sv, inradius);
+  }
+}
+
 // XD convex set tests
 //  Capsule test
 template <class C>
@@ -271,6 +330,31 @@ TYPED_TEST(CapsuleTest, SupportFunction) {
     EXPECT_NEAR(sv, n.dot(sp_), kTol);
     ASSERT_PRED3(AssertVectorEQ<dim>, sp, sp_, kTol);
   }
+}
+
+//  Sphere test (to test compilation)
+template <class C>
+class SphereTest : public testing::Test {
+ protected:
+  SphereTest() {}
+
+  ~SphereTest() {}
+};
+
+typedef testing::Types<Sphere<2>, Sphere<3>> SphereTypes;
+TYPED_TEST_SUITE(SphereTest, SphereTypes);
+
+TYPED_TEST(SphereTest, SupportFunction) {
+  constexpr int dim{TypeParam::Dimension()};
+  const Real radius{0.25};
+  auto set{TypeParam(radius)};
+
+  EXPECT_EQ(set.GetInradius(), radius);
+
+  Vecf<dim> sp;
+  Real sv{set.SupportFunction(Vecf<dim>::UnitX(), sp)};
+  EXPECT_NEAR(sv, radius, kTol);
+  EXPECT_PRED3(AssertVectorEQ<dim>, sp, radius * Vecf<dim>::UnitX(), kTol);
 }
 
 }  // namespace

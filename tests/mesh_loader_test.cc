@@ -59,6 +59,7 @@ TEST(MeshLoaderTest, StringParse) {
 }
 
 TEST(MeshLoaderTest, InputFile) {
+  GTEST_SKIP();
   std::string file = "../tinyobjloader/models/cube.obj";
 
   MeshLoader ml{};

@@ -50,7 +50,7 @@ class Polytope : public ConvexSet<3> {
    * @param vert     Vector of n three-dimensional vertices.
    * @param margin   Safety margin.
    * @param inradius Polytope inradius.
-   * @param thresh   (advanced) Support function threshold (default = 0.75).
+   * @param thresh   Support function threshold (default = 0.75).
    */
   Polytope(const std::vector<Vec3f>& vert, Real margin, Real inradius,
            Real thresh = Real(0.75));
