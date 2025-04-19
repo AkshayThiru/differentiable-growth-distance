@@ -151,6 +151,9 @@ TEST(MeshLoaderTest, MakeFacetGraph) {
 }
 
 TEST(MeshLoaderTest, SupportFunction) {
+  // Qhull computations can be unstable with float.
+  if (typeid(Real) == typeid(float)) GTEST_SKIP();
+
   SetDefaultSeed();
   const int nruns{10};
   const int ndir_xy{100}, ndir_z{10};

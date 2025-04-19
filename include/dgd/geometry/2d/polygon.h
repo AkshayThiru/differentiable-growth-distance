@@ -71,7 +71,7 @@ inline Real Polygon::SupportFunction(const Vec2f& n, Vec2f& sp,
   int idx{0};
   Real s{0.0}, sv{n.dot(vert_[idx])};
 
-  for (int i = 1; i < vert_.size(); ++i) {
+  for (int i = 1; i < static_cast<int>(vert_.size()); ++i) {
     s = n.dot(vert_[i]);
     if (s > sv) {
       idx = i;

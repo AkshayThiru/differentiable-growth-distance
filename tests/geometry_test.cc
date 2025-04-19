@@ -230,6 +230,9 @@ TEST(EllipsoidTest, SupportFunction) {
 
 //  Mesh test
 TEST(MeshTest, SupportFunction) {
+  // Qhull computations can be unstable with float.
+  if (typeid(Real) == typeid(float)) GTEST_SKIP();
+
   SetDefaultSeed();
   const int nruns{10};
   const int npts{400};
@@ -265,6 +268,9 @@ TEST(MeshTest, SupportFunction) {
 
 // Polytope test
 TEST(PolytopeTest, SupportFunction) {
+  // Qhull computations can be unstable with float.
+  if (typeid(Real) == typeid(float)) GTEST_SKIP();
+
   SetDefaultSeed();
   const int npts{1000};
   const Real margin{0.0}, len{5.0};

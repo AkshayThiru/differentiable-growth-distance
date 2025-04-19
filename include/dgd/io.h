@@ -37,13 +37,6 @@ namespace io {
 
 /**
  * @brief Prints diagnostic information at any iteration of the algorithm.
- *
- * @tparam    dim      Dimension of the convex sets.
- * @param[in] lb       Growth distance lower bound.
- * @param[in] ub       Growth distance upper bound.
- * @param[in] simplex  Simplex.
- * @param[in] settings Solver settings.
- * @param[in] out      Solver output.
  */
 template <int dim>
 void PrintSolutionDiagnostics(Real lb, Real ub, const Matf<dim, dim>& simplex,
@@ -69,13 +62,6 @@ void PrintSolutionDiagnostics(Real lb, Real ub, const Matf<dim, dim>& simplex,
 
 /**
  * @brief Sets ostream properties and prints diagnostics header.
- *
- * @tparam    dim      Dimension of the convex sets.
- * @param[in] lb       Growth distance lower bound.
- * @param[in] ub       Growth distance upper bound.
- * @param[in] simplex  Simplex.
- * @param[in] settings Solver settings.
- * @param[in] out      Solver output.
  */
 template <int dim>
 void PrintDiagnosticsHeader(Real lb, Real ub, const Matf<dim, dim>& simplex,
