@@ -46,7 +46,9 @@ class Sphere : public ConvexSet<dim> {
 
   ~Sphere() {};
 
-  Real SupportFunction(const Vecf<dim>& n, Vecf<dim>& sp) final;
+  Real SupportFunction(
+      const Vecf<dim>& n, Vecf<dim>& sp,
+      SupportFunctionHint<dim>* /*hint*/ = nullptr) const final;
 
  private:
   const Real radius_; /**< Radius. */
@@ -60,7 +62,9 @@ inline Sphere<dim>::Sphere(Real radius)
 }
 
 template <int dim>
-inline Real Sphere<dim>::SupportFunction(const Vecf<dim>& n, Vecf<dim>& sp) {
+inline Real Sphere<dim>::SupportFunction(
+    const Vecf<dim>& n, Vecf<dim>& sp,
+    SupportFunctionHint<dim>* /*hint*/) const {
   sp = radius_ * n;
   return radius_;
 }

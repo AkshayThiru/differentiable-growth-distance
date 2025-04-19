@@ -490,12 +490,12 @@ Real MeshLoader::Inradius(Vec3f& interior_point, bool use_given_ip) {
   std::vector<Vec3f> normal;
   std::vector<Real> offset;
   std::vector<int> graph;
-  Vec3f interior_point_;
-  bool valid{MakeFacetGraph(normal, offset, graph, interior_point_)};
+  Vec3f ip_;
+  bool valid{MakeFacetGraph(normal, offset, graph, ip_)};
   if (!valid) throw std::runtime_error("Qhull error");
 
-  if (use_given_ip) interior_point_ = interior_point;
-  return Inradius(normal, offset, interior_point_);
+  if (!use_given_ip) interior_point = ip_;
+  return Inradius(normal, offset, interior_point);
 }
 
 }  // namespace dgd

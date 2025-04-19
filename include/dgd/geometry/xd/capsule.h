@@ -48,11 +48,13 @@ class Capsule : public ConvexSet<dim> {
    * @param radius Radius.
    * @param margin Safety margin.
    */
-  Capsule(Real hlx, Real radius, Real margin);
+  explicit Capsule(Real hlx, Real radius, Real margin);
 
   ~Capsule() {};
 
-  Real SupportFunction(const Vecf<dim>& n, Vecf<dim>& sp) final;
+  Real SupportFunction(
+      const Vecf<dim>& n, Vecf<dim>& sp,
+      SupportFunctionHint<dim>* /*hint*/ = nullptr) const final;
 
  private:
   const Real hlx_;    /**< Half axis length. */
@@ -73,7 +75,9 @@ inline Capsule<dim>::Capsule(Real hlx, Real radius, Real margin)
 }
 
 template <int dim>
-inline Real Capsule<dim>::SupportFunction(const Vecf<dim>& n, Vecf<dim>& sp) {
+inline Real Capsule<dim>::SupportFunction(
+    const Vecf<dim>& n, Vecf<dim>& sp,
+    SupportFunctionHint<dim>* /*hint*/) const {
   sp = Capsule<dim>::inradius_ * n;
   sp(0) += std::copysign(hlx_, n(0));
   return sp.dot(n);

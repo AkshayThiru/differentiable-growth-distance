@@ -52,20 +52,19 @@ class Polytope : public ConvexSet<3> {
    * @param inradius Polytope inradius.
    * @param thresh   Support function threshold (default = 0.75).
    */
-  Polytope(const std::vector<Vec3f>& vert, Real margin, Real inradius,
-           Real thresh = Real(0.75));
+  explicit Polytope(const std::vector<Vec3f>& vert, Real margin, Real inradius,
+                    Real thresh = Real(0.75));
 
   ~Polytope() {};
 
-  Real SupportFunction(const Vec3f& n, Vec3f& sp) final;
+  Real SupportFunction(const Vec3f& n, Vec3f& sp,
+                       SupportFunctionHint<3>* hint = nullptr) const final;
 
  private:
   const std::vector<Vec3f> vert_; /**< Polytope vertices. */
   const Real margin_;             /**< Safety margin. */
 
-  Vec3f n_prev_;       // Previous normal vector.
   const Real thresh_;  // Support function threshold.
-  int idx_hint_;       // Best index hint for support function.
 };
 
 inline Polytope::Polytope(const std::vector<Vec3f>& vert, Real margin,
@@ -87,14 +86,13 @@ inline Polytope::Polytope(const std::vector<Vec3f>& vert, Real margin,
   // const int rank{static_cast<int>(qr.rank())};
   // if (rank != 3)
   //   throw std::domain_error("Polytope is not solid");
-
-  n_prev_ = Vec3f::Zero();
-  idx_hint_ = -1;
 }
 
-inline Real Polytope::SupportFunction(const Vec3f& n, Vec3f& sp) {
+inline Real Polytope::SupportFunction(const Vec3f& n, Vec3f& sp,
+                                      SupportFunctionHint<3>* hint) const {
   // Current best index.
-  int idx{(n_prev_.dot(n) > thresh_) ? idx_hint_ : 0};
+  int idx{(hint && hint->n_prev.dot(n) > thresh_) ? hint->idx_ws : 0};
+  assert(idx >= 0);
   // Current support value, current best support value.
   Real s{0.0}, sv{n.dot(vert_[idx])};
 
@@ -106,8 +104,10 @@ inline Real Polytope::SupportFunction(const Vec3f& n, Vec3f& sp) {
     }
   }
 
-  n_prev_ = n;
-  idx_hint_ = idx;
+  if (hint) {
+    hint->n_prev = n;
+    hint->idx_ws = idx;
+  }
 
   sp = vert_[idx] + margin_ * n;
   return sv + margin_;

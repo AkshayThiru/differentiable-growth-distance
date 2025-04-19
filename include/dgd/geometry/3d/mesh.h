@@ -54,13 +54,14 @@ class Mesh : public ConvexSet<3> {
    * @param thresh      Support function threshold (default = 0.9).
    * @param guess_level Guess level for the warm start index (default = 2).
    */
-  Mesh(const std::vector<Vec3f>& vert, const std::vector<int>& graph,
-       Real margin, Real inradius, Real thresh = Real(0.9),
-       int guess_level = 2);
+  explicit Mesh(const std::vector<Vec3f>& vert, const std::vector<int>& graph,
+                Real margin, Real inradius, Real thresh = Real(0.9),
+                int guess_level = 2);
 
   ~Mesh() {};
 
-  Real SupportFunction(const Vec3f& n, Vec3f& sp) final;
+  Real SupportFunction(const Vec3f& n, Vec3f& sp,
+                       SupportFunctionHint<3>* hint = nullptr) const final;
 
   /**
    * @brief Gets the vertices of the mesh convex hull.
@@ -94,9 +95,7 @@ class Mesh : public ConvexSet<3> {
   std::vector<int>::const_iterator vert_edgeadr_;
   std::vector<int>::const_iterator edge_localid_;
   std::vector<int> idx_ws0_;  // Initial guesses for idx_ws_.
-  Vec3f n_prev_;              // Previous normal vector.
   const Real thresh_;         // Support function warm start threshold.
-  int idx_ws_;                // Warm start index for support function.
 };
 
 inline Mesh::Mesh(const std::vector<Vec3f>& vert, const std::vector<int>& graph,
@@ -118,9 +117,6 @@ inline Mesh::Mesh(const std::vector<Vec3f>& vert, const std::vector<int>& graph,
 
   vert_edgeadr_ = graph_.begin() + 2;
   edge_localid_ = vert_edgeadr_ + nvert_;
-
-  n_prev_ = Vec3f::Zero();
-  idx_ws_ = -1;
 
   // Set idx_ws0_ indices.
   //  Select (0, 8, 20) uniformly distributed normal vectors.
@@ -153,29 +149,33 @@ inline Mesh::Mesh(const std::vector<Vec3f>& vert, const std::vector<int>& graph,
   //  Compute support function to set idx_ws0_.
   Vec3f sp;
   for (const auto& n : normals) {
-    SupportFunction(n, sp);
-    idx_ws0_.push_back(idx_ws_);
+    SupportFunctionHint<3> hint{};
+    SupportFunction(n, sp, &hint);
+    idx_ws0_.push_back(hint.idx_ws);
   }
 }
 
-inline Real Mesh::SupportFunction(const Vec3f& n, Vec3f& sp) {
+inline Real Mesh::SupportFunction(const Vec3f& n, Vec3f& sp,
+                                  SupportFunctionHint<3>* hint) const {
   // If the current normal is much different than the previous normal,
   // compute a new warm start index.
-  if (n_prev_.dot(n) < thresh_) {
+  int idx_ws{hint ? hint->idx_ws : 0};
+  if (hint && hint->n_prev.dot(n) < thresh_) {
     if (idx_ws0_.empty())
-      idx_ws_ = 0;
+      idx_ws = 0;
     else {
       Real s{0.0}, smax{-kInf};
       for (int i : idx_ws0_)
         if ((s = n.dot(vert_[i])) > smax) {
-          idx_ws_ = i;
+          idx_ws = i;
           smax = s;
         }
     }
   }
 
+  assert(idx_ws >= 0);
   // Current best index, neighbour index, previous best index.
-  int idx{idx_ws_}, nidx{-1}, pidx{-1};
+  int idx{idx_ws}, nidx{-1}, pidx{-1};
   // Current support value, current best support value.
   Real s{0.0}, sv{n.dot(vert_[idx])};
 
@@ -192,8 +192,10 @@ inline Real Mesh::SupportFunction(const Vec3f& n, Vec3f& sp) {
     }
   } while (idx != pidx);
 
-  n_prev_ = n;
-  idx_ws_ = idx;
+  if (hint) {
+    hint->n_prev = n;
+    hint->idx_ws = idx;
+  }
 
   sp = vert_[idx] + margin_ * n;
   return sv + margin_;

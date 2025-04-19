@@ -56,6 +56,17 @@ enum class SolutionStatus : uint8_t {
 };
 
 /**
+ * @brief Support function hint struct; used internally.
+ *
+ * @tparam dim Dimension of the convex sets.
+ */
+template <int dim>
+struct SupportFunctionHint {
+  Vecf<dim> n_prev{Vecf<dim>::Zero()};
+  int idx_ws{-1};
+};
+
+/**
  * @brief Solver output struct.
  *
  * @attention When not using warm start, a SolverOutput instance can be shared
@@ -94,6 +105,15 @@ struct SolverOutput {
    * @attention The normal vector is in the world frame of reference.
    */
   Vecf<dim> normal{Vecf<dim>::Zero()};
+
+  /**
+   * @name Support function hints
+   * @brief Additional hints for the support functions; used internally.
+   */
+  ///@{
+  SupportFunctionHint<dim> hint1_{};
+  SupportFunctionHint<dim> hint2_{};
+  ///@}
 
   /**
    * @brief Lower bound on the growth distance.
@@ -141,7 +161,7 @@ struct SolutionError {
    * When the growth distance algorithm converges, this error is less than the
    * specified value of rel_tol.
    */
-  Real primal_dual_rel_gap;
+  double primal_dual_rel_gap;
 
   /**
    * @brief Primal feasibility error.
@@ -156,7 +176,7 @@ struct SolutionError {
    * where \f$p_{12}\f$ and \f$cp_{12}\f$ are the center position and contact
    * point (wrt the center) on the Minkowski difference set.
    */
-  Real primal_feas_err;
+  double primal_feas_err;
 };
 
 }  // namespace dgd

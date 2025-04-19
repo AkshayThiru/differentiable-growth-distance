@@ -113,6 +113,12 @@ inline void InitializeSimplex(Vec2f& normal, Matf<2, 2>& simplex,
 /**
  * @brief Growth distance algorithm for 2D convex sets.
  *
+ * @attention When using warm-start, the following properties must be ensured:
+ * The same out struct must be reused from the previous function call;
+ * The out struct must not be used for other pairs of sets in between function
+ * calls;
+ * The order of set1 and set2 must not be changed.
+ *
  * @param[in]     set1,set2  Convex sets.
  * @param[in]     tf1,tf2    Rigid body transformations for the convex sets.
  * @param[in]     settings   Solver settings.
@@ -128,7 +134,10 @@ Real GrowthDistance(const C1* set1, const Transform2f& tf1, const C2* set2,
   static_assert((C1::Dimension() == 2) && (C2::Dimension() == 2),
                 "Convex sets are not two-dimensional");
 
-  if (!warm_start) out.inradius = set1->GetInradius() + set2->GetInradius();
+  if (!warm_start) {
+    out.inradius = set1->GetInradius() + set2->GetInradius();
+    out.hint2_.n_prev = out.hint1_.n_prev = Vec2f::Zero();
+  }
   out.iter = 0;
 
   // Check center distance.
@@ -175,8 +184,10 @@ Real GrowthDistance(const C1* set1, const Transform2f& tf1, const C2* set2,
   // algorithm.
   while (true) {
     // Compute support point for the Minkowski difference set along the normal.
-    const Real sv1{set1->SupportFunction(rot1.transpose() * normal, sp1)};
-    const Real sv2{set2->SupportFunction(-rot2.transpose() * normal, sp2)};
+    const Real sv1{
+        set1->SupportFunction(rot1.transpose() * normal, sp1, &out.hint1_)};
+    const Real sv2{
+        set2->SupportFunction(-rot2.transpose() * normal, sp2, &out.hint2_)};
     sp.noalias() = rot1 * sp1 - rot2 * sp2;
     // Update the lower bound and the current best normal vector.
     const Real lb_{(sv1 + sv2) / normal(1)};
@@ -375,7 +386,10 @@ Real GrowthDistance(const C1* set1, const Transform3f& tf1, const C2* set2,
   static_assert((C1::Dimension() == 3) && (C2::Dimension() == 3),
                 "Convex sets are not three-dimensional");
 
-  if (!warm_start) out.inradius = set1->GetInradius() + set2->GetInradius();
+  if (!warm_start) {
+    out.inradius = set1->GetInradius() + set2->GetInradius();
+    out.hint2_.n_prev = out.hint1_.n_prev = Vec3f::Zero();
+  }
   out.iter = 0;
 
   // Check center distance.
@@ -422,8 +436,10 @@ Real GrowthDistance(const C1* set1, const Transform3f& tf1, const C2* set2,
   // the algorithm.
   while (true) {
     // Compute support point for the Minkowski difference set along the normal.
-    const Real sv1{set1->SupportFunction(rot1.transpose() * sx.n, sx.sp1)};
-    const Real sv2{set2->SupportFunction(-rot2.transpose() * sx.n, sx.sp2)};
+    const Real sv1{
+        set1->SupportFunction(rot1.transpose() * sx.n, sx.sp1, &out.hint1_)};
+    const Real sv2{
+        set2->SupportFunction(-rot2.transpose() * sx.n, sx.sp2, &out.hint2_)};
     sx.sp.noalias() = rot1 * sx.sp1 - rot2 * sx.sp2;
     // Update the lower bound and the current best normal vector.
     const Real lb_{(sv1 + sv2) / sx.n(2)};
@@ -486,7 +502,7 @@ SolutionError GetSolutionError(const Transformf<dim>& tf1,
   const Vecf<dim> cp12{(rot1 * out.s1 - rot2 * out.s2) * out.bc};
 
   err.primal_dual_rel_gap =
-      std::abs(out.growth_dist_ub / out.growth_dist_lb - Real(1.0));
+      std::abs(out.growth_dist_ub / out.growth_dist_lb - 1.0);
   err.primal_feas_err = (p12 + cp12 * out.growth_dist_ub).norm();
   return err;
 }

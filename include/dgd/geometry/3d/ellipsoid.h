@@ -41,11 +41,12 @@ class Ellipsoid : public ConvexSet<3> {
    * @param hlx,hly,hlz Half axis lengths.
    * @param margin      Safety margin.
    */
-  Ellipsoid(Real hlx, Real hly, Real hlz, Real margin);
+  explicit Ellipsoid(Real hlx, Real hly, Real hlz, Real margin);
 
   ~Ellipsoid() {};
 
-  Real SupportFunction(const Vec3f& n, Vec3f& sp) final;
+  Real SupportFunction(const Vec3f& n, Vec3f& sp,
+                       SupportFunctionHint<3>* /*hint*/ = nullptr) const final;
 
  private:
   const Real hlx2_;   /**< Square of the half x-axis length. */
@@ -65,7 +66,8 @@ inline Ellipsoid::Ellipsoid(Real hlx, Real hly, Real hlz, Real margin)
   SetInradius(std::min({hlx, hly, hlz}) + margin);
 }
 
-inline Real Ellipsoid::SupportFunction(const Vec3f& n, Vec3f& sp) {
+inline Real Ellipsoid::SupportFunction(const Vec3f& n, Vec3f& sp,
+                                       SupportFunctionHint<3>* /*hint*/) const {
   const Real k{std::sqrt(hlx2_ * n(0) * n(0) + hly2_ * n(1) * n(1) +
                          hlz2_ * n(2) * n(2))};
   sp(0) = (hlx2_ / k + margin_) * n(0);

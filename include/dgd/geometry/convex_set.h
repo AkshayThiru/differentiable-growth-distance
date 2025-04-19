@@ -25,6 +25,7 @@
 #include <stdexcept>
 
 #include "dgd/data_types.h"
+#include "dgd/output.h"
 
 namespace dgd {
 
@@ -90,12 +91,19 @@ class ConvexSet {
    * where \f$m\f$ is the safety margin. Note that the safety margin also
    * increases the inradius.
    *
-   * @param[in]  n  Normal vector with unit 2-norm.
-   * @param[out] sp Support point. A point at which the maximum for the
-   * support function is attained.
-   * @return     Value of the support function at the normal vector.
+   * @attention A nonzero safety margin can result in slower convergence since
+   * it leads to the boundary of the convex set being a differentiable manifold;
+   * thus more iterations are needed for convergence.
+   *
+   * @param[in]     n    Normal vector with unit 2-norm.
+   * @param[out]    sp   Support point. A point at which the maximum for the
+   *                     support function is attained.
+   * @param[in,out] hint Additional hints.
+   * @return        Value of the support function at the normal vector.
    */
-  virtual Real SupportFunction(const Vecf<dim>& n, Vecf<dim>& sp) = 0;
+  virtual Real SupportFunction(
+      const Vecf<dim>& n, Vecf<dim>& sp,
+      SupportFunctionHint<dim>* /*hint*/ = nullptr) const = 0;
 
   /**
    * @brief Gets the dimension of the convex set.

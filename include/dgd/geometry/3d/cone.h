@@ -49,11 +49,12 @@ class Cone : public ConvexSet<3> {
    * @param height Height.
    * @param margin Safety margin.
    */
-  Cone(Real radius, Real height, Real margin);
+  explicit Cone(Real radius, Real height, Real margin);
 
   ~Cone() {};
 
-  Real SupportFunction(const Vec3f& n, Vec3f& sp) final;
+  Real SupportFunction(const Vec3f& n, Vec3f& sp,
+                       SupportFunctionHint<3>* /*hint*/ = nullptr) const final;
 
   Real GetOffset() const;
 
@@ -74,7 +75,8 @@ inline Cone::Cone(Real radius, Real height, Real margin)
   SetInradius(rho_ + margin);
 }
 
-inline Real Cone::SupportFunction(const Vec3f& n, Vec3f& sp) {
+inline Real Cone::SupportFunction(const Vec3f& n, Vec3f& sp,
+                                  SupportFunctionHint<3>* /*hint*/) const {
   sp = margin_ * n;
   if (n(2) >= sha_) {
     // The cone vertex is the support point.

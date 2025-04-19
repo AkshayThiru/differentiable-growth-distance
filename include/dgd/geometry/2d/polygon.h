@@ -46,11 +46,12 @@ class Polygon : public ConvexSet<2> {
    * @param margin   Safety margin.
    * @param inradius Polygon inradius.
    */
-  Polygon(const std::vector<Vec2f>& vert, Real margin, Real inradius);
+  explicit Polygon(const std::vector<Vec2f>& vert, Real margin, Real inradius);
 
   ~Polygon() {};
 
-  Real SupportFunction(const Vec2f& n, Vec2f& sp) final;
+  Real SupportFunction(const Vec2f& n, Vec2f& sp,
+                       SupportFunctionHint<2>* /*hint*/ = nullptr) const final;
 
  private:
   const std::vector<Vec2f> vert_; /**< Polygon vertices. */
@@ -64,7 +65,8 @@ inline Polygon::Polygon(const std::vector<Vec2f>& vert, Real margin,
     throw std::domain_error("Invalid margin or inradius");
 }
 
-inline Real Polygon::SupportFunction(const Vec2f& n, Vec2f& sp) {
+inline Real Polygon::SupportFunction(const Vec2f& n, Vec2f& sp,
+                                     SupportFunctionHint<2>* /*hint*/) const {
   // TODO: Implement hill-climbing/early termination(?)
   int idx{0};
   Real s{0.0}, sv{n.dot(vert_[idx])};

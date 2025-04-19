@@ -41,11 +41,12 @@ class Ellipse : public ConvexSet<2> {
    * @param hlx,hly Half axis lengths.
    * @param margin  Safety margin.
    */
-  Ellipse(Real hlx, Real hly, Real margin);
+  explicit Ellipse(Real hlx, Real hly, Real margin);
 
   ~Ellipse() {};
 
-  Real SupportFunction(const Vec2f& n, Vec2f& sp) final;
+  Real SupportFunction(const Vec2f& n, Vec2f& sp,
+                       SupportFunctionHint<2>* /*hint*/ = nullptr) const final;
 
  private:
   const Real hlx2_;   /**< Square of the half x-axis length. */
@@ -60,7 +61,8 @@ inline Ellipse::Ellipse(Real hlx, Real hly, Real margin)
   SetInradius(std::min(hlx, hly) + margin);
 }
 
-inline Real Ellipse::SupportFunction(const Vec2f& n, Vec2f& sp) {
+inline Real Ellipse::SupportFunction(const Vec2f& n, Vec2f& sp,
+                                     SupportFunctionHint<2>* /*hint*/) const {
   const Real k{std::sqrt(hlx2_ * n(0) * n(0) + hly2_ * n(1) * n(1))};
   sp(0) = (hlx2_ / k + margin_) * n(0);
   sp(1) = (hly2_ / k + margin_) * n(1);

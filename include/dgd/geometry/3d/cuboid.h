@@ -41,11 +41,12 @@ class Cuboid : public ConvexSet<3> {
    * @param hlx,hly,hlz Half side lengths.
    * @param margin      Safety margin.
    */
-  Cuboid(Real hlx, Real hly, Real hlz, Real margin);
+  explicit Cuboid(Real hlx, Real hly, Real hlz, Real margin);
 
   ~Cuboid() {};
 
-  Real SupportFunction(const Vec3f& n, Vec3f& sp) final;
+  Real SupportFunction(const Vec3f& n, Vec3f& sp,
+                       SupportFunctionHint<3>* /*hint*/ = nullptr) const final;
 
  private:
   const Real hlx_;    /**< Half x-axis side length. */
@@ -61,7 +62,8 @@ inline Cuboid::Cuboid(Real hlx, Real hly, Real hlz, Real margin)
   SetInradius(std::min({hlx, hly, hlz}) + margin);
 }
 
-inline Real Cuboid::SupportFunction(const Vec3f& n, Vec3f& sp) {
+inline Real Cuboid::SupportFunction(const Vec3f& n, Vec3f& sp,
+                                    SupportFunctionHint<3>* /*hint*/) const {
   sp = margin_ * n;
   sp(0) += std::copysign(hlx_, n(0));
   sp(1) += std::copysign(hly_, n(1));
