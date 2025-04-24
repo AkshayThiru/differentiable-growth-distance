@@ -56,12 +56,14 @@ class Cone : public ConvexSet<3> {
   Real SupportFunction(const Vec3f& n, Vec3f& sp,
                        SupportFunctionHint<3>* /*hint*/ = nullptr) const final;
 
+  bool Normalize() const final;
+
   Real GetOffset() const;
 
  private:
   const Real r_;      /**< Radius. */
   const Real h_;      /**< Height. */
-  Real sha_;          /**< Sine of the cone half angle. */
+  Real tha_;          /**< Tangent of the cone half angle. */
   Real rho_;          /**< Cone inradius (not considering the safety margin). */
   const Real margin_; /**< Safety margin. */
 };
@@ -70,7 +72,7 @@ inline Cone::Cone(Real radius, Real height, Real margin)
     : ConvexSet<3>(), r_(radius), h_(height), margin_(margin) {
   if ((radius <= 0.0) || (height <= 0.0) || (margin < 0.0))
     throw std::domain_error("Invalid radius, height, or margin");
-  sha_ = r_ / std::sqrt(r_ * r_ + h_ * h_);
+  tha_ = r_ / h_;
   rho_ = (std::sqrt(r_ * r_ + h_ * h_) * r_ - r_ * r_) / h_;
   SetInradius(rho_ + margin);
 }
@@ -78,18 +80,20 @@ inline Cone::Cone(Real radius, Real height, Real margin)
 inline Real Cone::SupportFunction(const Vec3f& n, Vec3f& sp,
                                   SupportFunctionHint<3>* /*hint*/) const {
   sp = margin_ * n;
-  if (n(2) >= sha_) {
+  const Real k{std::sqrt(n(0) * n(0) + n(1) * n(1))};
+  if (n(2) >= tha_ * k) {
     // The cone vertex is the support point.
     sp(2) += (h_ - rho_);
     return (h_ - rho_) * n(2) + margin_;
   } else {
     // The support point lies in the cone base.
-    const Real k{std::sqrt(n(0) * n(0) + n(1) * n(1))};
     if (k > kEps) sp.head<2>() += r_ * n.head<2>() / k;
     sp(2) -= rho_;
     return sp.dot(n);
   }
 }
+
+inline bool Cone::Normalize() const { return (margin_ > 0.0); }
 
 inline Real Cone::GetOffset() const { return rho_; }
 

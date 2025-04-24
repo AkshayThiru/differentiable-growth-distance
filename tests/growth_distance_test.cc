@@ -23,7 +23,7 @@ TEST(GrowthDistanceTest, EllipsePolygon) {
   const int nsamples_warm{100};
 
   // Set 1: ellipse.
-  const Real hlx{3.0}, hly{2.0}, margin1{0.25};
+  const Real hlx{3.0}, hly{2.0}, margin1{0.0};
   auto set1{Ellipse(hlx, hly, margin1)};
 
   // Set 2: polygon.
@@ -61,8 +61,8 @@ TEST(GrowthDistanceTest, EllipsePolygon) {
       ASSERT_TRUE(out.status == SolutionStatus::kOptimal ||
                   out.status == SolutionStatus::kCoincidentCenters);
       const SolutionError err{GetSolutionError(&set1, tf1, &set2, tf2, out)};
-      EXPECT_NEAR(err.prim_feas_err, 0.0, kTol);
-      EXPECT_NEAR(err.prim_dual_gap, 0.0, kTol);
+      ASSERT_NEAR(err.prim_feas_err, 0.0, kTol);
+      ASSERT_NEAR(err.prim_dual_gap, 0.0, kTol);
 
       tf1.topLeftCorner<2, 2>() *= dR;
       tf1.topRightCorner<2, 1>() += v * dt;
@@ -78,7 +78,7 @@ TEST(GrowthDistanceTest, ConeMesh) {
   const int nsamples_warm{100};
 
   // Set 1: cone.
-  const Real ha{kPi / 6.0}, radius{1.0}, margin1{0.25};
+  const Real ha{kPi / 6.0}, radius{1.0}, margin1{0.0};
   const Real height{radius / std::tan(ha)};
   auto set1{Cone(radius, height, margin1)};
 
@@ -122,8 +122,8 @@ TEST(GrowthDistanceTest, ConeMesh) {
       ASSERT_TRUE(out.status == SolutionStatus::kOptimal ||
                   out.status == SolutionStatus::kCoincidentCenters);
       const SolutionError err{GetSolutionError(&set1, tf1, &set2, tf2, out)};
-      EXPECT_NEAR(err.prim_feas_err, 0.0, kTol);
-      EXPECT_NEAR(err.prim_dual_gap, 0.0, kTol);
+      ASSERT_NEAR(err.prim_feas_err, 0.0, kTol);
+      ASSERT_NEAR(err.prim_dual_gap, 0.0, kTol);
 
       tf1.topLeftCorner<3, 3>() *= dR;
       tf1.topRightCorner<3, 1>() += v * dt;

@@ -102,7 +102,10 @@ struct SolverOutput {
   /**
    * @brief The normal vector of an optimal hyperplane (dual optimal solution).
    *
-   * @attention The normal vector is in the world frame of reference.
+   * @note The normal vector need not have unit 2-norm.
+   *
+   * @attention The normal vector is in the world frame of reference and is
+   * oriented along the vector p2 - p1, i.e., normal.dot(p2 - p1) > 0.
    */
   Vecf<dim> normal{Vecf<dim>::Zero()};
 

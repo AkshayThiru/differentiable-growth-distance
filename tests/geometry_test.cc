@@ -64,7 +64,7 @@ bool AssertVectorEQ(const Vecf<dim>& v1, const Vecf<dim>& v2, Real tol) {
 // 2D convex set tests
 //  Ellipse test
 TEST(EllipseTest, SupportFunction) {
-  const Real hlx{3.0}, hly{2.0}, margin{0.25};
+  const Real hlx{3.0}, hly{2.0}, margin{0.0};
   auto set{Ellipse(hlx, hly, margin)};
 
   EXPECT_EQ(set.GetInradius(), hly + margin);
@@ -75,11 +75,12 @@ TEST(EllipseTest, SupportFunction) {
   UniformCirclePoints(pts, 16);
   const Vec2f len(hlx, hly);
   for (int i = 0; i < pts.cols(); ++i) {
-    n = (pts.col(i).array() / len.array()).matrix().normalized();
+    n = (pts.col(i).array() / len.array()).matrix();
+    n = n / n.lpNorm<Eigen::Infinity>();
     sp_ = (pts.col(i).array() * len.array()).matrix() + margin * n;
     sv = set.SupportFunction(n, sp);
     EXPECT_NEAR(sv, n.dot(sp_), kTol);
-    EXPECT_PRED3(AssertVectorEQ<2>, sp, sp_, kTol);
+    ASSERT_PRED3(AssertVectorEQ<2>, sp, sp_, kTol);
   }
 }
 
@@ -100,7 +101,7 @@ TEST(PolygonTest, SupportFunction) {
   EXPECT_EQ(set.GetInradius(), inradius + margin);
 
   Real sv;
-  Vec2f sp, n;
+  Vec2f sp;
   Mat2Xf normals;
   UniformCirclePoints(normals, 16);
   for (int i = 0; i < normals.cols(); ++i) {
@@ -111,7 +112,7 @@ TEST(PolygonTest, SupportFunction) {
 
 //  Rectangle test
 TEST(RectangleTest, SupportFunction) {
-  const Real hlx{3.0}, hly{2.0}, margin{0.25};
+  const Real hlx{3.0}, hly{2.0}, margin{0.0};
   auto set{Rectangle(hlx, hly, margin)};
 
   EXPECT_EQ(set.GetInradius(), hly + margin);
@@ -121,7 +122,6 @@ TEST(RectangleTest, SupportFunction) {
   for (int i = 0; i < 4; ++i) {
     n = Vec2f(std::pow(-1.0, i % 2), std::pow(-1.0, (i / 2) % 2));
     sp_ = Vec2f(hlx * n(0), hly * n(1));
-    n.normalize();
     sp_ += margin * n;
     sv = set.SupportFunction(n, sp);
     EXPECT_NEAR(sv, n.dot(sp_), kTol);
@@ -132,7 +132,7 @@ TEST(RectangleTest, SupportFunction) {
 // 3D convex set tests
 //  Cone test
 TEST(ConeTest, SupportFunction) {
-  const Real ha{kPi / 6.0}, radius{1.0}, margin{0.25};
+  const Real ha{kPi / 6.0}, radius{1.0}, margin{0.0};
   const Real height{radius / std::tan(ha)};
   const Real rho{height / (Real(1.0) + Real(1.0) / std::sin(ha))};
   auto set{Cone(radius, height, margin)};
@@ -148,6 +148,7 @@ TEST(ConeTest, SupportFunction) {
   UniformSpherePoints(pts, 16, 9, Real(1e-5));
   for (int i = 0; i < pts.cols(); ++i) {
     n = pts.col(i);
+    n = n / n.lpNorm<Eigen::Infinity>();
     if (n.topRows<2>().norm() * std::tan(ha) < n(2))
       sp_ = Vec3f(0.0, 0.0, height - rho);
     else {
@@ -163,7 +164,7 @@ TEST(ConeTest, SupportFunction) {
 
 // Cuboid test
 TEST(CuboidTest, SupportFunction) {
-  const Real hlx{3.0}, hly{2.0}, hlz{1.5}, margin{0.25};
+  const Real hlx{3.0}, hly{2.0}, hlz{1.5}, margin{0.0};
   auto set{Cuboid(hlx, hly, hlz, margin)};
 
   EXPECT_EQ(set.GetInradius(), hlz + margin);
@@ -174,7 +175,6 @@ TEST(CuboidTest, SupportFunction) {
     n = Vec3f(Real(std::pow(-1.0, i % 2)), Real(std::pow(-1.0, (i / 2) % 2)),
               Real(std::pow(-1.0, (i / 4) % 2)));
     sp_ = Vec3f(hlx * n(0), hly * n(1), hlz * n(2));
-    n.normalize();
     sp_ += margin * n;
     sv = set.SupportFunction(n, sp);
     EXPECT_NEAR(sv, n.dot(sp_), kTol);
@@ -184,7 +184,7 @@ TEST(CuboidTest, SupportFunction) {
 
 // Cylinder test
 TEST(CylinderTest, SupportFunction) {
-  const Real hlx{2.0}, radius{2.5}, margin{0.25};
+  const Real hlx{2.0}, radius{2.5}, margin{0.0};
   auto set{Cylinder(hlx, radius, margin)};
 
   EXPECT_EQ(set.GetInradius(), hlx + margin);
@@ -197,7 +197,6 @@ TEST(CylinderTest, SupportFunction) {
     for (int j = 0; j < pts.cols(); ++j) {
       n(0) = Real(std::pow(-1.0, i));
       n.bottomRows<2>() = pts.col(j);
-      n.normalize();
       sp_(0) = hlx * Real(std::pow(-1.0, i));
       sp_.bottomRows<2>() = radius * pts.col(j);
       sp_ += margin * n;
@@ -209,7 +208,7 @@ TEST(CylinderTest, SupportFunction) {
 
 //  Ellipsoid test
 TEST(EllipsoidTest, SupportFunction) {
-  const Real hlx{3.0}, hly{2.0}, hlz{1.5}, margin{0.25};
+  const Real hlx{3.0}, hly{2.0}, hlz{1.5}, margin{0.0};
   auto set{Ellipsoid(hlx, hly, hlz, margin)};
 
   EXPECT_EQ(set.GetInradius(), hlz + margin);
@@ -220,7 +219,8 @@ TEST(EllipsoidTest, SupportFunction) {
   UniformSpherePoints(pts, 16, 9);
   const Vec3f len(hlx, hly, hlz);
   for (int i = 0; i < pts.cols(); ++i) {
-    n = (pts.col(i).array() / len.array()).matrix().normalized();
+    n = (pts.col(i).array() / len.array()).matrix();
+    n = n / n.lpNorm<Eigen::Infinity>();
     sp_ = (pts.col(i).array() * len.array()).matrix() + margin * n;
     sv = set.SupportFunction(n, sp);
     EXPECT_NEAR(sv, n.dot(sp_), kTol);
@@ -236,7 +236,7 @@ TEST(MeshTest, SupportFunction) {
   SetDefaultSeed();
   const int nruns{10};
   const int npts{400};
-  const Real inradius{0.25}, margin{0.25};
+  const Real inradius{0.25}, margin{0.0};
 
   MeshLoader ml{};
   std::vector<Vec3f> pts(npts), vert;
@@ -259,6 +259,7 @@ TEST(MeshTest, SupportFunction) {
     // Support function test.
     for (int j = 0; j < normals.cols(); ++j) {
       n = normals.col(j);
+      n = n / n.lpNorm<Eigen::Infinity>();
       sv_ = polytope.SupportFunction(n, sp_);
       sv = mesh.SupportFunction(n, sp);
       ASSERT_NEAR(sv, sv_, kTol);

@@ -50,6 +50,8 @@ class Sphere : public ConvexSet<dim> {
       const Vecf<dim>& n, Vecf<dim>& sp,
       SupportFunctionHint<dim>* /*hint*/ = nullptr) const final;
 
+  bool Normalize() const final;
+
  private:
   const Real radius_; /**< Radius. */
 };
@@ -67,6 +69,11 @@ inline Real Sphere<dim>::SupportFunction(
     SupportFunctionHint<dim>* /*hint*/) const {
   sp = radius_ * n;
   return radius_;
+}
+
+template <int dim>
+inline bool Sphere<dim>::Normalize() const {
+  return true;
 }
 
 typedef Sphere<2> Circle;

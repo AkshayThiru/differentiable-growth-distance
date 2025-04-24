@@ -56,6 +56,8 @@ class Capsule : public ConvexSet<dim> {
       const Vecf<dim>& n, Vecf<dim>& sp,
       SupportFunctionHint<dim>* /*hint*/ = nullptr) const final;
 
+  bool Normalize() const final;
+
  private:
   const Real hlx_;    /**< Half axis length. */
   const Real radius_; /**< Radius. */
@@ -81,6 +83,11 @@ inline Real Capsule<dim>::SupportFunction(
   sp = Capsule<dim>::inradius_ * n;
   sp(0) += std::copysign(hlx_, n(0));
   return sp.dot(n);
+}
+
+template <int dim>
+inline bool Capsule<dim>::Normalize() const {
+  return true;
 }
 
 }  // namespace dgd

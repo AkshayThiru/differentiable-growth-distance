@@ -83,8 +83,11 @@ class ConvexSet {
    * \f}
    * where \f$sv\f$ is the return value of the function.
    *
+   * @note If the normal vector n is required to have unit 2-norm, the function
+   * Normalize should return true.
+   *
    * @note Safety margins (in the 2-norm) can be directly included in the
-   * support function computation as: \f{align*}{
+   * support function computation (when n has unit 2-norm) as: \f{align*}{
    * sv & \leftarrow sv + m, \\
    * sp & \leftarrow sp + m \cdot n,
    * \f}
@@ -95,7 +98,9 @@ class ConvexSet {
    * it leads to the boundary of the convex set being a differentiable manifold;
    * thus more iterations are needed for convergence.
    *
-   * @param[in]     n    Normal vector with unit 2-norm.
+   * @see Normalize
+   *
+   * @param[in]     n    Normal vector.
    * @param[out]    sp   Support point. A point at which the maximum for the
    *                     support function is attained.
    * @param[in,out] hint Additional hints.
@@ -104,6 +109,17 @@ class ConvexSet {
   virtual Real SupportFunction(
       const Vecf<dim>& n, Vecf<dim>& sp,
       SupportFunctionHint<dim>* /*hint*/ = nullptr) const = 0;
+
+  /**
+   * @brief Returns the normalization requirement for the normal vector passed
+   * to SupportFunction.
+   *
+   * If the return value is true, the argument n to SupportFunction will have
+   * unit 2-norm.
+   *
+   * @see SupportFunction
+   */
+  virtual bool Normalize() const = 0;
 
   /**
    * @brief Gets the dimension of the convex set.

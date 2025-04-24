@@ -48,6 +48,8 @@ class Cuboid : public ConvexSet<3> {
   Real SupportFunction(const Vec3f& n, Vec3f& sp,
                        SupportFunctionHint<3>* /*hint*/ = nullptr) const final;
 
+  bool Normalize() const final;
+
  private:
   const Real hlx_;    /**< Half x-axis side length. */
   const Real hly_;    /**< Half y-axis side length. */
@@ -70,6 +72,8 @@ inline Real Cuboid::SupportFunction(const Vec3f& n, Vec3f& sp,
   sp(2) += std::copysign(hlz_, n(2));
   return sp.dot(n);
 }
+
+inline bool Cuboid::Normalize() const { return (margin_ > 0.0); }
 
 }  // namespace dgd
 

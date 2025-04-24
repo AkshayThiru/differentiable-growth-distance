@@ -48,6 +48,8 @@ class Rectangle : public ConvexSet<2> {
   Real SupportFunction(const Vec2f& n, Vec2f& sp,
                        SupportFunctionHint<2>* /*hint*/ = nullptr) const final;
 
+  bool Normalize() const final;
+
  private:
   const Real hlx_;    /**< Half x-axis side length. */
   const Real hly_;    /**< Half y-axis side length. */
@@ -68,6 +70,8 @@ inline Real Rectangle::SupportFunction(const Vec2f& n, Vec2f& sp,
   sp(1) += std::copysign(hly_, n(1));
   return sp.dot(n);
 }
+
+inline bool Rectangle::Normalize() const { return (margin_ > 0.0); }
 
 }  // namespace dgd
 

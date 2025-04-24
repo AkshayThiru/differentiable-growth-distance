@@ -53,6 +53,8 @@ class Polygon : public ConvexSet<2> {
   Real SupportFunction(const Vec2f& n, Vec2f& sp,
                        SupportFunctionHint<2>* /*hint*/ = nullptr) const final;
 
+  bool Normalize() const final;
+
  private:
   const std::vector<Vec2f> vert_; /**< Polygon vertices. */
   const Real margin_;             /**< Safety margin. */
@@ -82,6 +84,8 @@ inline Real Polygon::SupportFunction(const Vec2f& n, Vec2f& sp,
   sp = vert_[idx] + margin_ * n;
   return sv + margin_;
 }
+
+inline bool Polygon::Normalize() const { return (margin_ > 0.0); }
 
 }  // namespace dgd
 

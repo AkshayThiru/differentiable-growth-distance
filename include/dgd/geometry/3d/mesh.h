@@ -56,12 +56,14 @@ class Mesh : public ConvexSet<3> {
    */
   explicit Mesh(const std::vector<Vec3f>& vert, const std::vector<int>& graph,
                 Real margin, Real inradius, Real thresh = Real(0.9),
-                int guess_level = 2);
+                int guess_level = 1);
 
   ~Mesh() {};
 
   Real SupportFunction(const Vec3f& n, Vec3f& sp,
                        SupportFunctionHint<3>* hint = nullptr) const final;
+
+  bool Normalize() const final;
 
   /**
    * @brief Gets the vertices of the mesh convex hull.
@@ -200,6 +202,8 @@ inline Real Mesh::SupportFunction(const Vec3f& n, Vec3f& sp,
   sp = vert_[idx] + margin_ * n;
   return sv + margin_;
 }
+
+inline bool Mesh::Normalize() const { return (margin_ > 0.0); }
 
 inline const std::vector<Vec3f>& Mesh::GetVertices() const { return vert_; }
 

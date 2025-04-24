@@ -60,6 +60,8 @@ class Polytope : public ConvexSet<3> {
   Real SupportFunction(const Vec3f& n, Vec3f& sp,
                        SupportFunctionHint<3>* hint = nullptr) const final;
 
+  bool Normalize() const final;
+
  private:
   const std::vector<Vec3f> vert_; /**< Polytope vertices. */
   const Real margin_;             /**< Safety margin. */
@@ -112,6 +114,8 @@ inline Real Polytope::SupportFunction(const Vec3f& n, Vec3f& sp,
   sp = vert_[idx] + margin_ * n;
   return sv + margin_;
 }
+
+inline bool Polytope::Normalize() const { return (margin_ > 0.0); }
 
 }  // namespace dgd
 

@@ -48,6 +48,8 @@ class Ellipse : public ConvexSet<2> {
   Real SupportFunction(const Vec2f& n, Vec2f& sp,
                        SupportFunctionHint<2>* /*hint*/ = nullptr) const final;
 
+  bool Normalize() const final;
+
  private:
   const Real hlx2_;   /**< Square of the half x-axis length. */
   const Real hly2_;   /**< Square of the half y-axis length. */
@@ -68,6 +70,8 @@ inline Real Ellipse::SupportFunction(const Vec2f& n, Vec2f& sp,
   sp(1) = (hly2_ / k + margin_) * n(1);
   return k + margin_;
 }
+
+inline bool Ellipse::Normalize() const { return (margin_ > 0.0); }
 
 }  // namespace dgd
 

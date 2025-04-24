@@ -64,7 +64,6 @@ inline void UpdateNormal(const Matf<2, 2>& simplex, Vec2f& normal) {
   normal(0) = simplex(1, 1) - simplex(1, 0);
   normal(1) = simplex(0, 0) - simplex(0, 1) -
               kEps;  // Small constant added for dual feasibility.
-  normal.normalize();
 }
 
 /**
@@ -140,6 +139,7 @@ Real GrowthDistance(const C1* set1, const Transform2f& tf1, const C2* set2,
     out.hint2_.n_prev = out.hint1_.n_prev = Vec2f::Zero();
   }
   out.iter = 0;
+  const bool normalize{set1->Normalize() || set2->Normalize()};
 
   // Check center distance.
   const Vec2f p12{tf1.block<2, 1>(0, 2) - tf2.block<2, 1>(0, 2)};
@@ -170,6 +170,10 @@ Real GrowthDistance(const C1* set1, const Transform2f& tf1, const C2* set2,
         if (normal.dot(sp - simplex.col(0)) > Real(0.0)) {
           ub = UpdateSimplex(sp, s1_.col(i), s2_.col(i), simplex, out);
           UpdateNormal(simplex, normal);
+          if (normalize)
+            normal.normalize();
+          else
+            normal = normal / normal.lpNorm<Eigen::Infinity>();
         }
       }
   }
@@ -212,6 +216,10 @@ Real GrowthDistance(const C1* set1, const Transform2f& tf1, const C2* set2,
       break;
     }
     UpdateNormal(simplex, normal);
+    if (normalize)
+      normal.normalize();
+    else
+      normal = normal / normal.lpNorm<Eigen::Infinity>();
   }
 
   out.growth_dist_lb = -cdist / lb;
@@ -287,7 +295,6 @@ inline void UpdateNormal(Simplex& sx) {
   sx.n(1) = (sx.s(2, 2) - sx.s(2, 0)) * (sx.s(0, 1) - sx.s(0, 0)) -
             (sx.s(0, 2) - sx.s(0, 0)) * (sx.s(2, 1) - sx.s(2, 0));
   sx.n(2) = -sx.area;
-  sx.n.normalize();
 }
 
 /**
@@ -392,6 +399,7 @@ Real GrowthDistance(const C1* set1, const Transform3f& tf1, const C2* set2,
     out.hint2_.n_prev = out.hint1_.n_prev = Vec3f::Zero();
   }
   out.iter = 0;
+  const bool normalize{set1->Normalize() || set2->Normalize()};
 
   // Check center distance.
   const Vec3f p12{tf1.block<3, 1>(0, 3) - tf2.block<3, 1>(0, 3)};
@@ -422,6 +430,10 @@ Real GrowthDistance(const C1* set1, const Transform3f& tf1, const C2* set2,
           sx.sp2 = s2_.col(i);
           ub = UpdateSimplex(sx, out);
           UpdateNormal(sx);
+          if (normalize)
+            sx.n.normalize();
+          else
+            sx.n = sx.n / sx.n.lpNorm<Eigen::Infinity>();
         }
       }
   }
@@ -464,6 +476,10 @@ Real GrowthDistance(const C1* set1, const Transform3f& tf1, const C2* set2,
       break;
     }
     UpdateNormal(sx);
+    if (normalize)
+      sx.n.normalize();
+    else
+      sx.n = sx.n / sx.n.lpNorm<Eigen::Infinity>();
   }
 
   out.growth_dist_lb = -cdist / lb;
@@ -515,7 +531,7 @@ SolutionError GetSolutionError(const ConvexSet<dim>* set1,
   Vecf<dim> sp;
   const Real sv1{set1->SupportFunction(rot1.transpose() * out.normal, sp)};
   const Real sv2{set2->SupportFunction(-rot2.transpose() * out.normal, sp)};
-  const Real lb{std::abs((p1 - p2).dot(out.normal)) / (sv1 + sv2)};
+  const Real lb{(p2 - p1).dot(out.normal) / (sv1 + sv2)};
 
   err.prim_dual_gap = std::abs(out.growth_dist_ub / lb - 1.0);
   err.prim_feas_err = (cp1 - cp2).norm();
