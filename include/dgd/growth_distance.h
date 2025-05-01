@@ -119,6 +119,7 @@ inline void InitializeSimplex(Vec2f& normal, Matf<2, 2>& simplex,
  * calls;
  * The order of set1 and set2 must not be changed.
  *
+ * @tparam        collide    If true, performs a boolean collision check.
  * @param[in]     set1,set2  Convex sets.
  * @param[in]     tf1,tf2    Rigid body transformations for the convex sets.
  * @param[in]     settings   Solver settings.
@@ -127,7 +128,7 @@ inline void InitializeSimplex(Vec2f& normal, Matf<2, 2>& simplex,
  *                           solution (default = false).
  * @return        (lower bound of) the growth distance.
  */
-template <class C1, class C2>
+template <class C1, class C2, bool collide = false>
 Real GrowthDistance(const C1* set1, const Transform2f& tf1, const C2* set2,
                     const Transform2f& tf2, const SolverSettings& settings,
                     SolverOutput<2>& out, bool warm_start = false) {
@@ -207,9 +208,26 @@ Real GrowthDistance(const C1* set1, const Transform2f& tf1, const C2* set2,
     io::PrintSolutionDiagnostics(lb, ub, simplex, settings, out);
 #endif
 
-    if (lb >= ub * settings.rel_tol) {
-      out.status = SolutionStatus::kOptimal;
-      break;
+    if constexpr (collide) {
+      // Perform collision check.
+      if (lb > -cdist) {
+        // No collision.
+        out.growth_dist_lb = -cdist / lb;
+        out.normal = rot.transpose() * out.normal;
+        out.status = SolutionStatus::kOptimal;
+        return -1.0;
+      } else if (ub <= -cdist) {
+        // Collision.
+        out.growth_dist_ub = -cdist / ub;
+        out.status = SolutionStatus::kOptimal;
+        return 1.0;
+      }
+    } else {
+      // Check primal-dual gap.
+      if (lb >= ub * settings.rel_tol) {
+        out.status = SolutionStatus::kOptimal;
+        break;
+      }
     }
     if (out.iter >= settings.max_iter) {
       out.status = SolutionStatus::kMaxIterReached;
@@ -379,6 +397,7 @@ inline void InitializeSimplex(Simplex& sx, SolverOutput<3>& out) {
 /**
  * @brief Growth distance algorithm for 3D convex sets.
  *
+ * @tparam        collide    If true, performs a boolean collision check.
  * @param[in]     set1,set2  Convex sets.
  * @param[in]     tf1,tf2    Rigid body transformations for the convex sets.
  * @param[in]     settings   Solver settings.
@@ -387,7 +406,7 @@ inline void InitializeSimplex(Simplex& sx, SolverOutput<3>& out) {
  *                           solution (default = false).
  * @return        (lower bound of) the growth distance.
  */
-template <class C1, class C2>
+template <class C1, class C2, bool collide = false>
 Real GrowthDistance(const C1* set1, const Transform3f& tf1, const C2* set2,
                     const Transform3f& tf2, const SolverSettings& settings,
                     SolverOutput<3>& out, bool warm_start = false) {
@@ -467,9 +486,26 @@ Real GrowthDistance(const C1* set1, const Transform3f& tf1, const C2* set2,
     io::PrintSolutionDiagnostics(lb, ub, sx.s, settings, out);
 #endif
 
-    if (lb >= ub * settings.rel_tol) {
-      out.status = SolutionStatus::kOptimal;
-      break;
+    if constexpr (collide) {
+      // Perform collision check.
+      if (lb > -cdist) {
+        // No collision.
+        out.growth_dist_lb = -cdist / lb;
+        out.normal = rot.transpose() * out.normal;
+        out.status = SolutionStatus::kOptimal;
+        return -1.0;
+      } else if (ub <= -cdist) {
+        // Collision.
+        out.growth_dist_ub = -cdist / ub;
+        out.status = SolutionStatus::kOptimal;
+        return 1.0;
+      }
+    } else {
+      // Check primal-dual gap.
+      if (lb >= ub * settings.rel_tol) {
+        out.status = SolutionStatus::kOptimal;
+        break;
+      }
     }
     if (out.iter >= settings.max_iter) {
       out.status = SolutionStatus::kMaxIterReached;
@@ -495,8 +531,62 @@ Real GrowthDistance(const C1* set1, const Transform3f& tf1, const C2* set2,
 }
 
 /**********************************************************
+ * BOOLEAN COLLISION DETECTION ALGORITHM                  *
+ **********************************************************/
+
+/**
+ * @brief Collision detection algorithm for 2D and 3D convex sets.
+ *
+ * The function returns true if the centers coincide or if the sets intersect;
+ * false if a separating plane has been found or if the maximum number of
+ * iterations have been reached.
+ *
+ * @param[in]     set1,set2  Convex sets.
+ * @param[in]     tf1,tf2    Rigid body transformations for the convex sets.
+ * @param[in]     settings   Solver settings.
+ * @param[in,out] out        Solver output.
+ * @param         warm_start Use previous solver output to warm start current
+ *                           solution (default = false).
+ * @return        true, if the convex sets are colliding.
+ */
+template <class C1, class C2, int dim>
+inline bool CollisionCheck(const C1* set1, const Transformf<dim>& tf1,
+                           const C2* set2, const Transformf<dim>& tf2,
+                           const SolverSettings& settings,
+                           SolverOutput<dim>& out, bool warm_start = false) {
+  const Real gd{GrowthDistance<C1, C2, true>(set1, tf1, set2, tf2, settings,
+                                             out, warm_start)};
+  return ((out.status == SolutionStatus::kCoincidentCenters) ||
+          (out.status == SolutionStatus::kOptimal && gd > 0.0));
+}
+
+/**********************************************************
  * ADDITIONAL UTILITY FUNCTIONS                           *
  **********************************************************/
+
+/**
+ * @brief Computes an optimal solution for the growth distance problem.
+ *
+ * @attention Solver status must be kOptimal or kCoincidentCenters.
+ *
+ * @attention For the collision detection problem, out.s1 and out.s2 might not
+ * correspond to the simplex in the Minkowski difference set. So, this function
+ * might not return the intersection point.
+ *
+ * @tparam dim  Dimension of the convex sets.
+ * @param  tf1  Rigid body transformations for convex set 1.
+ * @param  tf2  (Unused) Rigid body transformations for convex set 2.
+ * @param  out  Solver output.
+ * @param  zopt Optimal solution.
+ */
+template <int dim>
+void GetOptimalSolution(const Transformf<dim>& tf1,
+                        const Transformf<dim>& /*tf2*/,
+                        const SolverOutput<dim>& out, Vecf<dim>& zopt) {
+  const Vecf<dim> p1{tf1.template block<dim, 1>(0, dim)};
+  const Rotf<dim> rot1{tf1.template block<dim, dim>(0, 0)};
+  zopt = p1 + out.growth_dist_ub * rot1 * out.s1 * out.bc;
+}
 
 /**
  * @brief Gets the primal-dual relative gap and the primal feasibility error.
@@ -536,6 +626,45 @@ SolutionError GetSolutionError(const ConvexSet<dim>* set1,
   err.prim_dual_gap = std::abs(out.growth_dist_ub / lb - 1.0);
   err.prim_feas_err = (cp1 - cp2).norm();
   return err;
+}
+
+/**
+ * @brief Asserts the collision status of the two convex sets.
+ *
+ * @tparam dim       Dimension of the convex sets.
+ * @param  set1,set2 Convex Sets.
+ * @param  tf1,tf2   Rigid body transformations for the convex sets.
+ * @param  out       Solver output.
+ * @param  collision Output of the CollisionCheck function.
+ * @return true, if the collision status is correct; false otherwise.
+ */
+template <int dim>
+bool AssertCollision(const ConvexSet<dim>* set1, const Transformf<dim>& tf1,
+                     const ConvexSet<dim>* set2, const Transformf<dim>& tf2,
+                     const SolverOutput<dim>& out, bool collision) {
+  if (out.status == SolutionStatus::kCoincidentCenters) {
+    return collision;
+  } else if (out.status == SolutionStatus::kMaxIterReached) {
+    return !collision;
+  }
+
+  const Vecf<dim> p1{tf1.template block<dim, 1>(0, dim)};
+  const Vecf<dim> p2{tf2.template block<dim, 1>(0, dim)};
+  const Rotf<dim> rot1{tf1.template block<dim, dim>(0, 0)};
+  const Rotf<dim> rot2{tf2.template block<dim, dim>(0, 0)};
+
+  if (collision) {
+    // const Vecf<dim> cp1{p1 + out.growth_dist_ub * rot1 * out.s1 * out.bc};
+    // const Vecf<dim> cp2{p2 + out.growth_dist_ub * rot2 * out.s2 * out.bc};
+    // return ((cp1 - cp2).norm() < kEpsSqrt) && (out.growth_dist_ub <= 1.0);
+    return out.growth_dist_ub <= 1.0;
+  } else {
+    Vecf<dim> sp;
+    const Real sv1{set1->SupportFunction(rot1.transpose() * out.normal, sp)};
+    const Real sv2{set2->SupportFunction(-rot2.transpose() * out.normal, sp)};
+    return (out.growth_dist_lb > 1.0) &&
+           (p2.dot(out.normal) - sv2 > p1.dot(out.normal) + sv1);
+  }
 }
 
 }  // namespace dgd

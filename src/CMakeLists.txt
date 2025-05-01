@@ -18,7 +18,7 @@ target_link_libraries(${LIB_CORE}
 )
 
 ## Compiler flags
-target_compile_features(${LIB_CORE} PUBLIC cxx_std_14)
+target_compile_features(${LIB_CORE} PUBLIC cxx_std_17)
 set_target_properties(${LIB_CORE} PROPERTIES CXX_EXTENSIONS OFF)
 
 # Note: -ffast-math (-fno-math-errno, -Ofast) breaks IEEE compliance
