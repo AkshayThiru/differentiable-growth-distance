@@ -58,6 +58,14 @@ class Cone : public ConvexSet<3> {
 
   bool Normalize() const final;
 
+  /**
+   * @brief Gets the z-offset of the base of the cone.
+   *
+   * The center of the base of the cone is at \f$(0, 0, -\rho)\f$, where
+   * \f$\rho\f$ is the offset (also the inradius).
+   *
+   * @return z-offset of the base of the cone.
+   */
   Real GetOffset() const;
 
  private:

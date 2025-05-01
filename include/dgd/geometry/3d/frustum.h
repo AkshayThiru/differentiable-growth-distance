@@ -1,0 +1,127 @@
+// Copyright 2025 Akshay Thirugnanam
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @file frustum.h
+ * @author Akshay Thirugnanam (akshay_t@berkeley.edu)
+ * @date 2025-05-01
+ * @brief 3D frustum class.
+ */
+
+#ifndef DGD_GEOMETRY_3D_FRUSTUM_H_
+#define DGD_GEOMETRY_3D_FRUSTUM_H_
+
+#include <cmath>
+#include <stdexcept>
+
+#include "dgd/data_types.h"
+#include "dgd/geometry/convex_set.h"
+
+namespace dgd {
+
+/**
+ * @brief Axis-aligned 3D frustum class with base radius \f$r_b\f$, top radius
+ * \f$r_t\f$, and height \f$h\f$.
+ *
+ * @note The origin is located in the incenter of the frustum. If
+ * \f$r_b >= r_t\f$, the center of the base of the frustum is at
+ * \f$(0, 0, -\rho)\f$, where \f$\rho\f$ is the inradius of the frustum and
+ * \f[
+ * \rho = \min\bigg\{
+ *        \frac{h}{2},
+ *        \frac{r_b(\sqrt{r_b^2 + h_c^2} - r_b)}{h_c}
+ *        \biggr\},
+ * \f]
+ * where \f$h_c = r_b / (r_b - r_t) h\f$. If \f$r_b < r_t\f$, the center of the
+ * base of the frustum is at \f$(0, 0, h - \rho)\f$.
+ */
+class Frustum : public ConvexSet<3> {
+ public:
+  /**
+   * @brief Constructs a Frustum object.
+   *
+   * @param base_radius Base radius.
+   * @param top_radius  Top radius.
+   * @param height      Height.
+   * @param margin      Safety margin.
+   */
+  explicit Frustum(Real base_radius, Real top_radius, Real height, Real margin);
+
+  ~Frustum() {};
+
+  Real SupportFunction(const Vec3f& n, Vec3f& sp,
+                       SupportFunctionHint<3>* /*hint*/ = nullptr) const final;
+
+  bool Normalize() const final;
+
+  /**
+   * @brief Gets the z-offset of the base of the frustum.
+   *
+   * The center of the base of the frustum is at \f$(0, 0, -o)\f$, where
+   * \f$o\f$ is the offset.
+   *
+   * @return z-offset of the base of the frustum.
+   */
+  Real GetOffset() const;
+
+ private:
+  const Real rb_;     /**< Base radius. */
+  const Real rt_;     /**< Top radius. */
+  const Real h_;      /**< Height. */
+  Real tha_;          /**< Tangent of the frustum half angle. */
+  Real offset_;       /**< z-offset of the base of the frustum. */
+  const Real margin_; /**< Safety margin. */
+};
+
+inline Frustum::Frustum(Real base_radius, Real top_radius, Real height,
+                        Real margin)
+    : ConvexSet<3>(),
+      rb_(base_radius),
+      rt_(top_radius),
+      h_(height),
+      margin_(margin) {
+  if ((std::max(base_radius, top_radius) <= 0.0) || (height <= 0.0) ||
+      (margin < 0.0))
+    throw std::domain_error("Invalid radii, height, or margin");
+  tha_ = std::abs(rb_ - rt_) / h_;
+  const Real r{std::max(rb_, rt_)};
+  const Real rho{std::min(h_ / Real(2.0),
+                          (std::sqrt(Real(1.0) + tha_ * tha_) - tha_) * r)};
+  offset_ = (rb_ >= rt_) ? rho : h_ - rho;
+  SetInradius(rho + margin);
+}
+
+inline Real Frustum::SupportFunction(const Vec3f& n, Vec3f& sp,
+                                     SupportFunctionHint<3>* /*hint*/) const {
+  sp = margin_ * n;
+  const Real k{std::sqrt(n(0) * n(0) + n(1) * n(1))};
+  if (n(2) >= tha_ * k) {
+    // The support point lies in the frustum top.
+    if (k > kEps) sp.head<2>() += rt_ * n.head<2>() / k;
+    sp(2) += (h_ - offset_);
+  } else {
+    // The support point lies in the frustum base.
+    if (k > kEps) sp.head<2>() += rb_ * n.head<2>() / k;
+    sp(2) -= offset_;
+  }
+  return sp.dot(n);
+}
+
+inline bool Frustum::Normalize() const { return (margin_ > 0.0); }
+
+inline Real Frustum::GetOffset() const { return offset_; }
+
+}  // namespace dgd
+
+#endif  // DGD_GEOMETRY_3D_FRUSTUM_H_

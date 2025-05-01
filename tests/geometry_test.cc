@@ -12,6 +12,7 @@
 #include "dgd/geometry/3d/cuboid.h"
 #include "dgd/geometry/3d/cylinder.h"
 #include "dgd/geometry/3d/ellipsoid.h"
+#include "dgd/geometry/3d/frustum.h"
 #include "dgd/geometry/3d/mesh.h"
 #include "dgd/geometry/3d/polytope.h"
 #include "dgd/geometry/xd/capsule.h"
@@ -152,7 +153,7 @@ TEST(ConeTest, SupportFunction) {
     if (n.topRows<2>().norm() * std::tan(ha) < n(2))
       sp_ = Vec3f(0.0, 0.0, height - rho);
     else {
-      sp_.topRows<2>() = n.topRows<2>().normalized();
+      sp_.topRows<2>() = radius * n.topRows<2>().normalized();
       sp_(2) = -rho;
     }
     sp_ += margin * n;
@@ -225,6 +226,107 @@ TEST(EllipsoidTest, SupportFunction) {
     sv = set.SupportFunction(n, sp);
     EXPECT_NEAR(sv, n.dot(sp_), kTol);
     EXPECT_PRED3(AssertVectorEQ<3>, sp, sp_, kTol);
+  }
+}
+
+//  Frustum test
+TEST(FrustumTest, SupportFunction) {
+  const Real margin{0.0};
+  std::vector<Frustum> sets;
+  std::vector<Real> rb(8), rt(8), h(8);
+
+  // Tall cylinder.
+  Real radius{1.0}, height{2.0};
+  rb[0] = radius;
+  rt[0] = radius;
+  h[0] = height;
+  sets.push_back(Frustum(radius, radius, height, margin));
+  EXPECT_NEAR(sets[0].GetInradius(), radius + margin, kTol);
+  EXPECT_NEAR(sets[0].GetOffset(), radius, kTol);
+  // Short cylinder.
+  height = 0.5;
+  rb[1] = radius;
+  rt[1] = radius;
+  h[1] = height;
+  sets.push_back(Frustum(radius, radius, height, margin));
+  EXPECT_NEAR(sets[1].GetInradius(), height / Real(2.0) + margin, kTol);
+  EXPECT_NEAR(sets[1].GetOffset(), height / Real(2.0), kTol);
+
+  // Cone.
+  Real ha{kPi / 6.0};
+  height = radius / std::tan(ha);
+  Real rho{height / (Real(1.0) + Real(1.0) / std::sin(ha))};
+  rb[2] = radius;
+  rt[2] = 0.0;
+  h[2] = height;
+  sets.push_back(Frustum(radius, 0.0, height, margin));
+  EXPECT_NEAR(sets[2].GetInradius(), rho + margin, kTol);
+  EXPECT_NEAR(sets[2].GetOffset(), rho, kTol);
+  // Inverted cone.
+  rb[3] = 0.0;
+  rt[3] = radius;
+  h[3] = height;
+  sets.push_back(Frustum(0.0, radius, height, margin));
+  EXPECT_NEAR(sets[3].GetInradius(), rho + margin, kTol);
+  EXPECT_NEAR(sets[3].GetOffset(), height - rho, kTol);
+
+  // Tall frustum with large base.
+  Real height_cone{radius / std::tan(ha)};
+  height = height_cone / Real(2.0) + rho;
+  Real small_radius{radius * (Real(1.0) - height / height_cone)};
+  rb[4] = radius;
+  rt[4] = small_radius;
+  h[4] = height;
+  sets.push_back(Frustum(radius, small_radius, height, margin));
+  EXPECT_NEAR(sets[4].GetInradius(), rho + margin, kTol);
+  EXPECT_NEAR(sets[4].GetOffset(), rho, kTol);
+  // Tall frustum with small base.
+  rb[5] = small_radius;
+  rt[5] = radius;
+  h[5] = height;
+  sets.push_back(Frustum(small_radius, radius, height, margin));
+  EXPECT_NEAR(sets[5].GetInradius(), rho + margin, kTol);
+  EXPECT_NEAR(sets[5].GetOffset(), height - rho, kTol);
+  // Short frustum with large base.
+  height = rho;
+  small_radius = radius / height_cone * height;
+  rb[6] = radius;
+  rt[6] = small_radius;
+  h[6] = height;
+  sets.push_back(Frustum(radius, small_radius, height, margin));
+  EXPECT_NEAR(sets[6].GetInradius(), height / Real(2.0) + margin, kTol);
+  EXPECT_NEAR(sets[6].GetOffset(), height / Real(2.0), kTol);
+  // Short frustum with small base.
+  rb[7] = small_radius;
+  rt[7] = radius;
+  h[7] = height;
+  sets.push_back(Frustum(small_radius, radius, height, margin));
+  EXPECT_NEAR(sets[7].GetInradius(), height / Real(2.0) + margin, kTol);
+  EXPECT_NEAR(sets[7].GetOffset(), height / Real(2.0), kTol);
+
+  Real sv, tha, offset;
+  Vec3f sp, sp_, n;
+  Mat3Xf pts;
+  UniformSpherePoints(pts, 16, 10, Real(1e-5));
+  for (int k = 0; k < static_cast<int>(sets.size()); ++k) {
+    const auto& set = sets[k];
+    for (int i = 0; i < pts.cols(); ++i) {
+      n = pts.col(i);
+      n = n / n.lpNorm<Eigen::Infinity>();
+      tha = std::abs(rb[k] - rt[k]) / h[k];
+      offset = set.GetOffset();
+      if (n.topRows<2>().norm() * tha < n(2)) {
+        sp_.topRows<2>() = rt[k] * n.topRows<2>().normalized();
+        sp_(2) = h[k] - offset;
+      } else {
+        sp_.topRows<2>() = rb[k] * n.topRows<2>().normalized();
+        sp_(2) = -offset;
+      }
+      sp_ += margin * n;
+      sv = set.SupportFunction(n, sp);
+      EXPECT_NEAR(sv, n.dot(sp_), kTol);
+      ASSERT_PRED3(AssertVectorEQ<3>, sp, sp_, kTol);
+    }
   }
 }
 
