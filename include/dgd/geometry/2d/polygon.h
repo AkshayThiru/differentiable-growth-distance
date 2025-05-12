@@ -70,7 +70,10 @@ inline Polygon::Polygon(const std::vector<Vec2f>& vert, Real margin,
 
 inline Real Polygon::SupportFunction(const Vec2f& n, Vec2f& sp,
                                      SupportFunctionHint<2>* /*hint*/) const {
-  // TODO: Implement hill-climbing/early termination(?)
+  // Other methods/options:
+  // 1. Early termination of the loop.
+  // 2. Hill-climbing algorithm.
+  // 3. Bisection method.
   int idx{0};
   Real s{0.0}, sv{n.dot(vert_[idx])};
 

@@ -35,16 +35,16 @@ namespace dgd {
  * @tparam dim Dimension of the sphere.
  */
 template <int dim>
-class Sphere : public ConvexSet<dim> {
+class TSphere : public ConvexSet<dim> {
  public:
   /**
    * @brief Constructs a Sphere object.
    *
    * @param radius Radius.
    */
-  explicit Sphere(Real radius);
+  explicit TSphere(Real radius);
 
-  ~Sphere() {};
+  ~TSphere() {};
 
   Real SupportFunction(
       const Vecf<dim>& n, Vecf<dim>& sp,
@@ -57,14 +57,14 @@ class Sphere : public ConvexSet<dim> {
 };
 
 template <int dim>
-inline Sphere<dim>::Sphere(Real radius)
+inline TSphere<dim>::TSphere(Real radius)
     : ConvexSet<dim>(radius), radius_(radius) {
   static_assert((dim == 2) || (dim == 3), "Incompatible dim");
   if (radius <= 0.0) throw std::domain_error("Radius is nonpositive");
 }
 
 template <int dim>
-inline Real Sphere<dim>::SupportFunction(
+inline Real TSphere<dim>::SupportFunction(
     const Vecf<dim>& n, Vecf<dim>& sp,
     SupportFunctionHint<dim>* /*hint*/) const {
   sp = radius_ * n;
@@ -72,11 +72,12 @@ inline Real Sphere<dim>::SupportFunction(
 }
 
 template <int dim>
-inline bool Sphere<dim>::RequireUnitNormal() const {
+inline bool TSphere<dim>::RequireUnitNormal() const {
   return true;
 }
 
-typedef Sphere<2> Circle;
+typedef TSphere<2> Circle;
+typedef TSphere<3> Sphere;
 
 }  // namespace dgd
 

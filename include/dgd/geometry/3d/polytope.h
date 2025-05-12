@@ -63,6 +63,20 @@ class Polytope : public ConvexSet<3> {
 
   bool RequireUnitNormal() const final override;
 
+  /**
+   * @brief Gets the polytope vertices.
+   *
+   * @return Polytope vertices.
+   */
+  const std::vector<Vec3f>& Vertices() const;
+
+  /**
+   * @brief Returns the number of vertices in the polytope.
+   *
+   * @return Number of vertices.
+   */
+  int nvert() const;
+
  private:
   const std::vector<Vec3f> vert_; /**< Polytope vertices. */
   const Real margin_;             /**< Safety margin. */
@@ -117,6 +131,10 @@ inline Real Polytope::SupportFunction(const Vec3f& n, Vec3f& sp,
 }
 
 inline bool Polytope::RequireUnitNormal() const { return (margin_ > 0.0); }
+
+inline const std::vector<Vec3f>& Polytope::Vertices() const { return vert_; }
+
+inline int Polytope::nvert() const { return static_cast<int>(vert_.size()); }
 
 }  // namespace dgd
 

@@ -25,9 +25,19 @@
 #include <stdexcept>
 
 #include "dgd/data_types.h"
-#include "dgd/output.h"
 
 namespace dgd {
+
+/**
+ * @brief Support function hint struct; used internally.
+ *
+ * @tparam dim Dimension of the convex sets.
+ */
+template <int dim>
+struct SupportFunctionHint {
+  Vecf<dim> n_prev{Vecf<dim>::Zero()};
+  int idx_ws{-1};
+};
 
 /**
  * @brief Convex set abstract class implementing the support function.

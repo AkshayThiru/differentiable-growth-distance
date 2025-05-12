@@ -413,7 +413,7 @@ class CapsuleTest : public testing::Test {
   ~CapsuleTest() {}
 };
 
-typedef testing::Types<Capsule<2>, Capsule<3>> CapsuleTypes;
+typedef testing::Types<Stadium, Capsule> CapsuleTypes;
 TYPED_TEST_SUITE(CapsuleTest, CapsuleTypes);
 
 TYPED_TEST(CapsuleTest, SupportFunction) {
@@ -450,7 +450,7 @@ class SphereTest : public testing::Test {
   ~SphereTest() {}
 };
 
-typedef testing::Types<Sphere<2>, Sphere<3>> SphereTypes;
+typedef testing::Types<Circle, Sphere> SphereTypes;
 TYPED_TEST_SUITE(SphereTest, SphereTypes);
 
 TYPED_TEST(SphereTest, SupportFunction) {

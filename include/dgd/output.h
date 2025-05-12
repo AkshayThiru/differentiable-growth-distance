@@ -25,6 +25,7 @@
 #include <cstdint>
 
 #include "dgd/data_types.h"
+#include "dgd/geometry/convex_set.h"
 
 namespace dgd {
 
@@ -53,17 +54,6 @@ enum class SolutionStatus : uint8_t {
    * @see SolverSettings.min_center_dist
    */
   kCoincidentCenters,
-};
-
-/**
- * @brief Support function hint struct; used internally.
- *
- * @tparam dim Dimension of the convex sets.
- */
-template <int dim>
-struct SupportFunctionHint {
-  Vecf<dim> n_prev{Vecf<dim>::Zero()};
-  int idx_ws{-1};
 };
 
 /**

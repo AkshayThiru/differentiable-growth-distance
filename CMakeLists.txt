@@ -33,23 +33,6 @@ add_subdirectory(src)
 if(DGD_INSTALL_LIBS)
   include(CMakePackageConfigHelpers)
 
-  configure_package_config_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dgdConfig.cmake.in"
-    "${PROJECT_BINARY_DIR}/${DGD_LIB}Config.cmake"
-    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${DGD_LIB}"
-  )
-
-  # major.minor1.patch1 is compatible with major.minor2.patch2
-  write_basic_package_version_file(
-    "${PROJECT_BINARY_DIR}/${DGD_LIB}ConfigVersion.cmake"
-    COMPATIBILITY SameMajorVersion
-  )
-
-  install(
-    FILES "${PROJECT_BINARY_DIR}/${DGD_LIB}ConfigVersion.cmake"
-    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${DGD_LIB}"
-  )
-
   install(TARGETS ${DGD_LIB}
     EXPORT ${DGD_LIB}Targets
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
@@ -61,6 +44,26 @@ if(DGD_INSTALL_LIBS)
     NAMESPACE ${DGD_LIB}::
     FILE "${DGD_LIB}Targets.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${DGD_LIB}
+  )
+
+  configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/dgdConfig.cmake.in"
+    "${PROJECT_BINARY_DIR}/${DGD_LIB}Config.cmake"
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${DGD_LIB}"
+  )
+  install(
+    FILES "${PROJECT_BINARY_DIR}/${DGD_LIB}Config.cmake"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${DGD_LIB}"
+  )
+
+  # major.minor1.patch1 is compatible with major.minor2.patch2
+  write_basic_package_version_file(
+    "${PROJECT_BINARY_DIR}/${DGD_LIB}ConfigVersion.cmake"
+    COMPATIBILITY SameMajorVersion
+  )
+  install(
+    FILES "${PROJECT_BINARY_DIR}/${DGD_LIB}ConfigVersion.cmake"
+    DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${DGD_LIB}"
   )
 
   install(
