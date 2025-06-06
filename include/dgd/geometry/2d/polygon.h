@@ -35,11 +35,8 @@ namespace dgd {
 class Polygon : public ConvexSet<2> {
  public:
   /**
-   * @brief Constructs a Polygon object.
-   *
    * @attention When used as a standalone set, the polygon must contain the
-   * origin in its interior. This property is not enforced and must be
-   * guaranteed by the user, whenever necessary.
+   * origin in its interior.
    *
    * @see GrahamScan
    * @see ComputePolygonInradius
@@ -77,8 +74,8 @@ inline Real Polygon::SupportFunction(const Vec2r& n, Vec2r& sp,
   // 1. Early termination of the loop.
   // 2. Hill-climbing algorithm.
   // 3. Bisection method.
-  int idx{0};
-  Real s{0.0}, sv{n.dot(vert_[idx])};
+  int idx = 0;
+  Real s = 0.0, sv = n.dot(vert_[idx]);
 
   for (int i = 1; i < static_cast<int>(vert_.size()); ++i) {
     s = n.dot(vert_[i]);

@@ -13,7 +13,7 @@ namespace {
 
 using namespace dgd;
 
-const Real kTol{kSqrtEps};
+const Real kTol = kSqrtEps;
 
 TEST(GrahamScanTest, ZeroDim) {
   std::vector<Vec2r> pts, vert;
@@ -109,15 +109,15 @@ TEST(GrahamScanTest, TwoDim) {
   EXPECT_EQ(vert[1], Vec2r(6.0, 4.0));
   EXPECT_EQ(vert[2], Vec2r(0.0, 4.0));
 
-  Real inradius{ComputePolygonInradius(vert, Vec2r(3.0, 3.0))};
+  Real inradius = ComputePolygonInradius(vert, Vec2r(3.0, 3.0));
   EXPECT_NEAR(inradius, std::sqrt(9.0 / 13.0), kTol);
 }
 
 TEST(GrahamScanTest, CcwOrientation) {
   SetDefaultSeed();
-  const int nruns{100};
-  const int npts{1000};
-  const Real side_len{10.0};
+  const int nruns = 100;
+  const int npts = 1000;
+  const Real side_len = 10.0;
 
   auto ccw = [](const Vec2r& u, const Vec2r& v, const Vec2r& w) -> Real {
     return (v - u).cross(w - u);
@@ -127,7 +127,7 @@ TEST(GrahamScanTest, CcwOrientation) {
   for (int i = 0; i < nruns; ++i) {
     for (int j = 0; j < npts; ++j)
       pts[j] = Vec2r(Random(side_len), Random(side_len));
-    const int nvert{GrahamScan(pts, vert)};
+    const int nvert = GrahamScan(pts, vert);
 
     // Orientation test.
     if (nvert > 2) {
@@ -142,16 +142,16 @@ TEST(GrahamScanTest, CcwOrientation) {
 // Support functions of a set and its convex hull are the same.
 TEST(GrahamScanTest, SupportFunction) {
   SetDefaultSeed();
-  const int nruns{100};
-  const int ndir{100};
-  const int npts{1000};
-  const Real side_len{10.0};
+  const int nruns = 100;
+  const int ndir = 100;
+  const int npts = 1000;
+  const Real side_len = 10.0;
 
   auto support = [](const std::vector<Vec2r>& p, const Vec2r& n,
                     Vec2r& sp) -> bool {
-    int idx{0};
-    Real s{0.0}, sv{n.dot(p[0])};
-    bool multiple{false};
+    int idx = 0;
+    Real s = 0.0, sv = n.dot(p[0]);
+    bool multiple = false;
     for (int i = 1; i < static_cast<int>(p.size()); ++i) {
       s = n.dot(p[i]);
       if (s > sv) {
@@ -174,9 +174,9 @@ TEST(GrahamScanTest, SupportFunction) {
 
     // Support function test.
     for (int k = 0; k < ndir; ++k) {
-      Real ang{Real(2 * k) * kPi / ndir};
+      Real ang = Real(2 * k) * kPi / ndir;
       dir = Vec2r(std::cos(ang), std::sin(ang));
-      bool multiple{support(pts, dir, spt)};
+      bool multiple = support(pts, dir, spt);
       if (multiple) continue;
       support(vert, dir, sp);
       EXPECT_NEAR(dir.dot(spt), dir.dot(sp), kTol);

@@ -36,8 +36,6 @@ namespace dgd {
 class Ellipse : public ConvexSet<2> {
  public:
   /**
-   * @brief Constructs an Ellipse object.
-   *
    * @param hlx,hly Half axis lengths.
    * @param margin  Safety margin.
    */
@@ -67,7 +65,7 @@ inline Ellipse::Ellipse(Real hlx, Real hly, Real margin)
 
 inline Real Ellipse::SupportFunction(const Vec2r& n, Vec2r& sp,
                                      SupportFunctionHint<2>* /*hint*/) const {
-  const Real k{std::sqrt(hlx2_ * n(0) * n(0) + hly2_ * n(1) * n(1))};
+  const Real k = std::sqrt(hlx2_ * n(0) * n(0) + hly2_ * n(1) * n(1));
   sp(0) = (hlx2_ / k + margin_) * n(0);
   sp(1) = (hly2_ / k + margin_) * n(1);
   return k + margin_;

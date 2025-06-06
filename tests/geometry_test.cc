@@ -29,7 +29,7 @@ void UniformCirclePoints(Matr<2, -1>& pts, int size) {
   assert(size >= 2);
   pts.resize(2, size);
 
-  const Vecr<-1> ang{Vecr<-1>::LinSpaced(size + 1, 0.0, 2.0 * kPi)};
+  const Vecr<-1> ang = Vecr<-1>::LinSpaced(size + 1, 0.0, 2.0 * kPi);
   pts.row(0) = ang.head(size).transpose().array().cos();
   pts.row(1) = ang.head(size).transpose().array().sin();
 }
@@ -39,13 +39,13 @@ void UniformSpherePoints(Matr<3, -1>& pts, int size_xy, int size_z,
   assert((size_xy >= 2) && (size_z >= 2));
   pts.resize(3, size_xy * size_z);
 
-  const Vecr<-1> ang_xy{Vecr<-1>::LinSpaced(size_xy + 1, 0.0, 2.0 * kPi)};
+  const Vecr<-1> ang_xy = Vecr<-1>::LinSpaced(size_xy + 1, 0.0, 2.0 * kPi);
   Matr<2, -1> pts_xy(2, size_xy);
   pts_xy.row(0) = ang_xy.head(size_xy).transpose().array().cos();
   pts_xy.row(1) = ang_xy.head(size_xy).transpose().array().sin();
 
-  const Vecr<-1> ang_z{Vecr<-1>::LinSpaced(size_z, -kPi / Real(2.0) + z_off,
-                                           kPi / Real(2.0) - z_off)};
+  const Vecr<-1> ang_z = Vecr<-1>::LinSpaced(size_z, -kPi / Real(2.0) + z_off,
+                                             kPi / Real(2.0) - z_off);
   for (int i = 0; i < size_z; ++i) {
     pts.block(0, size_xy * i, 2, size_xy) = pts_xy * std::cos(ang_z(i));
     pts.block(2, size_xy * i, 1, size_xy) =
@@ -54,7 +54,7 @@ void UniformSpherePoints(Matr<3, -1>& pts, int size_xy, int size_z,
 }
 
 // Assertion functions
-const Real kTol{kSqrtEps};
+const Real kTol = kSqrtEps;
 
 template <int dim>
 bool AssertVectorEQ(const Vecr<dim>& v1, const Vecr<dim>& v2, Real tol) {
@@ -65,8 +65,8 @@ bool AssertVectorEQ(const Vecr<dim>& v1, const Vecr<dim>& v2, Real tol) {
 // 2D convex set tests
 //  Ellipse test
 TEST(EllipseTest, SupportFunction) {
-  const Real hlx{3.0}, hly{2.0}, margin{0.0};
-  auto set{Ellipse(hlx, hly, margin)};
+  const Real hlx = 3.0, hly = 2.0, margin = 0.0;
+  auto set = Ellipse(hlx, hly, margin);
 
   EXPECT_EQ(set.inradius(), hly + margin);
 
@@ -88,16 +88,17 @@ TEST(EllipseTest, SupportFunction) {
 // Polygon test
 TEST(PolygonTest, SupportFunction) {
   SetDefaultSeed();
-  const int npts{100};
-  const Real margin{0.0}, len{5.0};
+  const int npts = 100;
+  const Real margin = 0.0, len = 5.0;
 
   std::vector<Vec2r> pts, vert;
-  for (int i = 0; i < npts; ++i)
+  for (int i = 0; i < npts; ++i) {
     pts.push_back(Vec2r(Random(-len, len), Random(-len, len)));
+  }
   GrahamScan(pts, vert);
-  Real inradius{ComputePolygonInradius(vert, Vec2r::Zero())};
+  Real inradius = ComputePolygonInradius(vert, Vec2r::Zero());
 
-  auto set{Polygon(vert, margin, inradius)};
+  auto set = Polygon(vert, margin, inradius);
 
   EXPECT_EQ(set.inradius(), inradius + margin);
 
@@ -113,8 +114,8 @@ TEST(PolygonTest, SupportFunction) {
 
 //  Rectangle test
 TEST(RectangleTest, SupportFunction) {
-  const Real hlx{3.0}, hly{2.0}, margin{0.0};
-  auto set{Rectangle(hlx, hly, margin)};
+  const Real hlx = 3.0, hly = 2.0, margin = 0.0;
+  auto set = Rectangle(hlx, hly, margin);
 
   EXPECT_EQ(set.inradius(), hly + margin);
 
@@ -133,10 +134,10 @@ TEST(RectangleTest, SupportFunction) {
 // 3D convex set tests
 //  Cone test
 TEST(ConeTest, SupportFunction) {
-  const Real ha{kPi / 6.0}, radius{1.0}, margin{0.0};
-  const Real height{radius / std::tan(ha)};
-  const Real rho{height / (Real(1.0) + Real(1.0) / std::sin(ha))};
-  auto set{Cone(radius, height, margin)};
+  const Real ha = kPi / 6.0, radius = 1.0, margin = 0.0;
+  const Real height = radius / std::tan(ha);
+  const Real rho = height / (Real(1.0) + Real(1.0) / std::sin(ha));
+  auto set = Cone(radius, height, margin);
 
   EXPECT_NEAR(set.inradius(), rho + margin, kTol);
   EXPECT_NEAR(set.offset(), rho, kTol);
@@ -150,9 +151,9 @@ TEST(ConeTest, SupportFunction) {
   for (int i = 0; i < pts.cols(); ++i) {
     n = pts.col(i);
     n = n / n.lpNorm<Eigen::Infinity>();
-    if (n.topRows<2>().norm() * std::tan(ha) < n(2))
+    if (n.topRows<2>().norm() * std::tan(ha) < n(2)) {
       spt = Vec3r(0.0, 0.0, height - rho);
-    else {
+    } else {
       spt.topRows<2>() = radius * n.topRows<2>().normalized();
       spt(2) = -rho;
     }
@@ -165,8 +166,8 @@ TEST(ConeTest, SupportFunction) {
 
 // Cuboid test
 TEST(CuboidTest, SupportFunction) {
-  const Real hlx{3.0}, hly{2.0}, hlz{1.5}, margin{0.0};
-  auto set{Cuboid(hlx, hly, hlz, margin)};
+  const Real hlx = 3.0, hly = 2.0, hlz = 1.5, margin = 0.0;
+  auto set = Cuboid(hlx, hly, hlz, margin);
 
   EXPECT_EQ(set.inradius(), hlz + margin);
 
@@ -185,8 +186,8 @@ TEST(CuboidTest, SupportFunction) {
 
 // Cylinder test
 TEST(CylinderTest, SupportFunction) {
-  const Real hlx{2.0}, radius{2.5}, margin{0.0};
-  auto set{Cylinder(hlx, radius, margin)};
+  const Real hlx = 2.0, radius = 2.5, margin = 0.0;
+  auto set = Cylinder(hlx, radius, margin);
 
   EXPECT_EQ(set.inradius(), hlx + margin);
 
@@ -209,8 +210,8 @@ TEST(CylinderTest, SupportFunction) {
 
 //  Ellipsoid test
 TEST(EllipsoidTest, SupportFunction) {
-  const Real hlx{3.0}, hly{2.0}, hlz{1.5}, margin{0.0};
-  auto set{Ellipsoid(hlx, hly, hlz, margin)};
+  const Real hlx = 3.0, hly = 2.0, hlz = 1.5, margin = 0.0;
+  auto set = Ellipsoid(hlx, hly, hlz, margin);
 
   EXPECT_EQ(set.inradius(), hlz + margin);
 
@@ -231,12 +232,12 @@ TEST(EllipsoidTest, SupportFunction) {
 
 //  Frustum test
 TEST(FrustumTest, SupportFunction) {
-  const Real margin{0.0};
+  const Real margin = 0.0;
   std::vector<Frustum> sets;
   std::vector<Real> rb(8), rt(8), h(8);
 
   // Tall cylinder.
-  Real radius{1.0}, height{2.0};
+  Real radius = 1.0, height = 2.0;
   rb[0] = radius;
   rt[0] = radius;
   h[0] = height;
@@ -253,9 +254,9 @@ TEST(FrustumTest, SupportFunction) {
   EXPECT_NEAR(sets[1].offset(), height / Real(2.0), kTol);
 
   // Cone.
-  Real ha{kPi / 6.0};
+  Real ha = kPi / 6.0;
   height = radius / std::tan(ha);
-  Real rho{height / (Real(1.0) + Real(1.0) / std::sin(ha))};
+  Real rho = height / (Real(1.0) + Real(1.0) / std::sin(ha));
   rb[2] = radius;
   rt[2] = 0.0;
   h[2] = height;
@@ -271,9 +272,9 @@ TEST(FrustumTest, SupportFunction) {
   EXPECT_NEAR(sets[3].offset(), height - rho, kTol);
 
   // Tall frustum with large base.
-  Real height_cone{radius / std::tan(ha)};
+  Real height_cone = radius / std::tan(ha);
   height = height_cone / Real(2.0) + rho;
-  Real small_radius{radius * (Real(1.0) - height / height_cone)};
+  Real small_radius = radius * (Real(1.0) - height / height_cone);
   rb[4] = radius;
   rt[4] = small_radius;
   h[4] = height;
@@ -313,7 +314,7 @@ TEST(FrustumTest, SupportFunction) {
     for (int i = 0; i < pts.cols(); ++i) {
       n = pts.col(i);
       n = n / n.lpNorm<Eigen::Infinity>();
-      tha = std::abs(rb[k] - rt[k]) / h[k];
+      tha = (rb[k] - rt[k]) / h[k];
       offset = set.offset();
       if (n.topRows<2>().norm() * tha < n(2)) {
         spt.topRows<2>() = rt[k] * n.topRows<2>().normalized();
@@ -336,9 +337,9 @@ TEST(MeshTest, SupportFunction) {
   if (typeid(Real) == typeid(float)) GTEST_SKIP();
 
   SetDefaultSeed();
-  const int nruns{10};
-  const int npts{400};
-  const Real inradius{0.25}, margin{0.0};
+  const int nruns = 10;
+  const int npts = 400;
+  const Real inradius = 0.25, margin = 0.0;
 
   MeshLoader ml{};
   std::vector<Vec3r> pts(npts), vert;
@@ -348,15 +349,16 @@ TEST(MeshTest, SupportFunction) {
   Vec3r sp, spt, n;
   Real sv, svt;
   for (int i = 0; i < nruns; ++i) {
-    for (int j = 0; j < npts; ++j)
+    for (int j = 0; j < npts; ++j) {
       pts[j] = Vec3r(Random(1.0), Random(1.0), Random(1.0)).normalized();
+    }
     ml.ProcessPoints(pts);
-    bool valid{ml.MakeVertexGraph(vert, graph)};
+    bool valid = ml.MakeVertexGraph(vert, graph);
 
     ASSERT_TRUE(valid);
 
-    auto polytope{Polytope(vert, margin, inradius)};
-    auto mesh{Mesh(vert, graph, margin, inradius)};
+    auto polytope = Polytope(vert, margin, inradius);
+    auto mesh = Mesh(vert, graph, margin, inradius);
 
     // Support function test.
     for (int j = 0; j < normals.cols(); ++j) {
@@ -375,8 +377,8 @@ TEST(PolytopeTest, SupportFunction) {
   if (typeid(Real) == typeid(float)) GTEST_SKIP();
 
   SetDefaultSeed();
-  const int npts{1000};
-  const Real margin{0.0}, len{5.0};
+  const int npts = 1000;
+  const Real margin = 0.0, len = 5.0;
 
   std::vector<Real> pts;
   for (int i = 0; i < 3 * npts; ++i) pts.push_back(Random(-len, len));
@@ -386,10 +388,10 @@ TEST(PolytopeTest, SupportFunction) {
   std::vector<Vec3r> vert;
   std::vector<int> graph;
   ml.MakeVertexGraph(vert, graph);
-  Vec3r interior_point{Vec3r::Zero()};
-  Real inradius{ml.ComputeInradius(interior_point)};
+  Vec3r interior_point = Vec3r::Zero();
+  Real inradius = ml.ComputeInradius(interior_point);
 
-  auto set{Polytope(vert, margin, inradius)};
+  auto set = Polytope(vert, margin, inradius);
 
   EXPECT_EQ(set.inradius(), inradius + margin);
 
@@ -417,15 +419,15 @@ typedef testing::Types<Stadium, Capsule> CapsuleTypes;
 TYPED_TEST_SUITE(CapsuleTest, CapsuleTypes);
 
 TYPED_TEST(CapsuleTest, SupportFunction) {
-  constexpr int dim{TypeParam::dimension()};
-  const Real hlx{2.0}, radius{2.5}, margin{0.25};
-  auto set{TypeParam(hlx, radius, margin)};
+  constexpr int dim = TypeParam::dimension();
+  const Real hlx = 2.0, radius = 2.5, margin = 0.25;
+  auto set = TypeParam(hlx, radius, margin);
 
   EXPECT_EQ(set.inradius(), radius + margin);
 
   Matr<3, -1> pts;
   // Odd number of points avoids zero x-component of normal.
-  const int size_xy{17};
+  const int size_xy = 17;
   UniformSpherePoints(pts, size_xy, 9);
   const int size = (dim == 2) ? size_xy : static_cast<int>(pts.cols());
 
@@ -454,14 +456,14 @@ typedef testing::Types<Circle, Sphere> SphereTypes;
 TYPED_TEST_SUITE(SphereTest, SphereTypes);
 
 TYPED_TEST(SphereTest, SupportFunction) {
-  constexpr int dim{TypeParam::dimension()};
-  const Real radius{0.25};
-  auto set{TypeParam(radius)};
+  constexpr int dim = TypeParam::dimension();
+  const Real radius = 0.25;
+  auto set = TypeParam(radius);
 
   EXPECT_EQ(set.inradius(), radius);
 
   Vecr<dim> sp;
-  Real sv{set.SupportFunction(Vecr<dim>::UnitX(), sp)};
+  Real sv = set.SupportFunction(Vecr<dim>::UnitX(), sp);
   EXPECT_NEAR(sv, radius, kTol);
   EXPECT_PRED3(AssertVectorEQ<dim>, sp, radius * Vecr<dim>::UnitX(), kTol);
 }

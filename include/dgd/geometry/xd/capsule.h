@@ -39,18 +39,16 @@ namespace dgd {
  * @tparam dim Dimension of the capsule.
  */
 template <int dim>
-class TCapsule : public ConvexSet<dim> {
+class CapsuleImpl : public ConvexSet<dim> {
  public:
   /**
-   * @brief Constructs a Capsule object.
-   *
    * @param hlx    Half axis length.
    * @param radius Radius.
    * @param margin Safety margin.
    */
-  explicit TCapsule(Real hlx, Real radius, Real margin);
+  explicit CapsuleImpl(Real hlx, Real radius, Real margin);
 
-  ~TCapsule() = default;
+  ~CapsuleImpl() = default;
 
   Real SupportFunction(
       const Vecr<dim>& n, Vecr<dim>& sp,
@@ -65,34 +63,33 @@ class TCapsule : public ConvexSet<dim> {
 };
 
 template <int dim>
-inline TCapsule<dim>::TCapsule(Real hlx, Real radius, Real margin)
+inline CapsuleImpl<dim>::CapsuleImpl(Real hlx, Real radius, Real margin)
     : ConvexSet<dim>(margin + radius),
       hlx_(hlx),
       radius_(radius),
       margin_(margin) {
-  static_assert((dim == 2) || (dim == 3),
-                "Incompatible dimension (not 2 or 3)");
+  static_assert((dim == 2) || (dim == 3), "dim is not 2 or 3");
   if ((hlx <= 0.0) || (radius <= 0.0) || (margin < 0.0)) {
     throw std::domain_error("Invalid axis length, radius, or margin");
   }
 }
 
 template <int dim>
-inline Real TCapsule<dim>::SupportFunction(
+inline Real CapsuleImpl<dim>::SupportFunction(
     const Vecr<dim>& n, Vecr<dim>& sp,
     SupportFunctionHint<dim>* /*hint*/) const {
-  sp = TCapsule<dim>::inradius_ * n;
+  sp = CapsuleImpl<dim>::inradius_ * n;
   sp(0) += std::copysign(hlx_, n(0));
   return sp.dot(n);
 }
 
 template <int dim>
-inline bool TCapsule<dim>::RequireUnitNormal() const {
+inline bool CapsuleImpl<dim>::RequireUnitNormal() const {
   return true;
 }
 
-typedef TCapsule<2> Stadium;
-typedef TCapsule<3> Capsule;
+using Stadium = CapsuleImpl<2>;
+using Capsule = CapsuleImpl<3>;
 
 }  // namespace dgd
 

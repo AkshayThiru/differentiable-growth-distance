@@ -43,8 +43,6 @@ namespace dgd {
 class Cone : public ConvexSet<3> {
  public:
   /**
-   * @brief Constructs a Cone object.
-   *
    * @param radius Radius.
    * @param height Height.
    * @param margin Safety margin.
@@ -64,8 +62,6 @@ class Cone : public ConvexSet<3> {
    *
    * The center of the base of the cone is at \f$(0, 0, -\rho)\f$, where
    * \f$\rho\f$ is the offset (also the inradius).
-   *
-   * @return z-offset of the base of the cone.
    */
   Real offset() const;
 
@@ -90,7 +86,7 @@ inline Cone::Cone(Real radius, Real height, Real margin)
 inline Real Cone::SupportFunction(const Vec3r& n, Vec3r& sp,
                                   SupportFunctionHint<3>* /*hint*/) const {
   sp = margin_ * n;
-  const Real k{std::sqrt(n(0) * n(0) + n(1) * n(1))};
+  const Real k = std::sqrt(n(0) * n(0) + n(1) * n(1));
   if (n(2) >= tha_ * k) {
     // The cone vertex is the support point.
     sp(2) += (h_ - rho_);

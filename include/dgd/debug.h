@@ -40,12 +40,12 @@ template <int dim>
 void PrintDebugIteration(int iter, Real lb, Real ub,
                          const Matr<dim, dim>& simplex,
                          const Settings& settings, const Output<dim>& out) {
-  const Real primal{std::abs(Real(1.0) / ub)};
-  const Real dual{std::abs(Real(1.0) / lb)};
-  const Real rel_err{std::abs(lb / ub)};
-  const Real rel_tol{settings.rel_tol};
-  const Real prim_feas_err{
-      (simplex.template topRows<dim - 1>() * out.bc).norm()};
+  const Real primal = std::abs(Real(1.0) / ub);
+  const Real dual = std::abs(Real(1.0) / lb);
+  const Real rel_err = std::abs(lb / ub);
+  const Real rel_tol = settings.rel_tol;
+  const Real prim_feas_err =
+      (simplex.template topRows<dim - 1>() * out.bc).norm();
   // clang-format off
   std::cout << std::setw(6) << std::setprecision(4) << iter << "| "
             << std::setw(15) << std::setprecision(7) << primal << ">= "
@@ -63,7 +63,7 @@ void PrintDebugHeader(int iter, Real lb, Real ub, const Matr<dim, dim>& simplex,
                       const Settings& settings, const Output<dim>& out) {
   std::cout << std::left;
   std::cout << std::scientific;
-  const int line_len{6 + 15 * 4 + 13 + 21};
+  const int line_len = 6 + 15 * 4 + 13 + 21;
   std::cout << std::string(line_len, '-') << std::endl;
   // clang-format off
   std::cout << std::setw(6) << "iter" << "| "

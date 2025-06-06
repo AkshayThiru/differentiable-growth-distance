@@ -49,8 +49,6 @@ namespace dgd {
 class Frustum : public ConvexSet<3> {
  public:
   /**
-   * @brief Constructs a Frustum object.
-   *
    * @param base_radius Base radius.
    * @param top_radius  Top radius.
    * @param height      Height.
@@ -71,8 +69,6 @@ class Frustum : public ConvexSet<3> {
    *
    * The center of the base of the frustum is at \f$(0, 0, -o)\f$, where
    * \f$o\f$ is the offset.
-   *
-   * @return z-offset of the base of the frustum.
    */
   Real offset() const;
 
@@ -96,10 +92,11 @@ inline Frustum::Frustum(Real base_radius, Real top_radius, Real height,
       (margin < 0.0)) {
     throw std::domain_error("Invalid radii, height, or margin");
   }
-  tha_ = std::abs(rb_ - rt_) / h_;
-  const Real r{std::max(rb_, rt_)};
-  const Real rho{std::min(h_ / Real(2.0),
-                          (std::sqrt(Real(1.0) + tha_ * tha_) - tha_) * r)};
+  tha_ = (rb_ - rt_) / h_;
+  const Real r = std::max(rb_, rt_);
+  const Real rho =
+      std::min(h_ / Real(2.0),
+               (std::sqrt(Real(1.0) + tha_ * tha_) - std::abs(tha_)) * r);
   offset_ = (rb_ >= rt_) ? rho : h_ - rho;
   set_inradius(rho + margin);
 }
@@ -107,7 +104,7 @@ inline Frustum::Frustum(Real base_radius, Real top_radius, Real height,
 inline Real Frustum::SupportFunction(const Vec3r& n, Vec3r& sp,
                                      SupportFunctionHint<3>* /*hint*/) const {
   sp = margin_ * n;
-  const Real k{std::sqrt(n(0) * n(0) + n(1) * n(1))};
+  const Real k = std::sqrt(n(0) * n(0) + n(1) * n(1));
   if (n(2) >= tha_ * k) {
     // The support point lies in the frustum top.
     if (k > kEps) sp.head<2>() += rt_ * n.head<2>() / k;

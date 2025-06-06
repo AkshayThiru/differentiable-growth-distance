@@ -36,8 +36,6 @@ namespace dgd {
 class Rectangle : public ConvexSet<2> {
  public:
   /**
-   * @brief Constructs a Rectangle object.
-   *
    * @param hlx,hly Half side lengths.
    * @param margin  Safety margin.
    */

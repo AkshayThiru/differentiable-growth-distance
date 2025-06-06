@@ -38,8 +38,6 @@ namespace dgd {
 class Cylinder : public ConvexSet<3> {
  public:
   /**
-   * @brief Constructs a Cylinder object.
-   *
    * @param hlx    Half axis length.
    * @param radius Radius.
    * @param margin Safety margin.
@@ -71,7 +69,7 @@ inline Cylinder::Cylinder(Real hlx, Real radius, Real margin)
 inline Real Cylinder::SupportFunction(const Vec3r& n, Vec3r& sp,
                                       SupportFunctionHint<3>* /*hint*/) const {
   sp = margin_ * n;
-  const Real k{std::sqrt(n(1) * n(1) + n(2) * n(2))};
+  const Real k = std::sqrt(n(1) * n(1) + n(2) * n(2));
   if (k > kEps) sp.tail<2>() += radius_ * n.tail<2>() / k;
   sp(0) += std::copysign(hlx_, n(0));
   return sp.dot(n);

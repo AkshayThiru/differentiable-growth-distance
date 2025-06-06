@@ -47,7 +47,7 @@ class MeshLoader {
   /**
    * @brief Constructs a new Mesh Loader object.
    *
-   * @param maxhullvert Maximum number of convex hull vertices (default = 1e4).
+   * @param maxhullvert Maximum number of convex hull vertices.
    */
   explicit MeshLoader(int maxhullvert = 10000);
 
@@ -60,8 +60,7 @@ class MeshLoader {
    * https://github.com/tinyobjloader/tinyobjloader/blob/release/loader_example.cc
    *
    * @param input   Mesh wavefront filename (*.obj) or object string.
-   * @param is_file Whether input is a filename or an object string
-   *                (default = true).
+   * @param is_file Whether input is a filename.
    */
   void LoadObj(const std::string& input, bool is_file = true);
 
@@ -69,7 +68,7 @@ class MeshLoader {
    * @brief Converts points to double precision and removes duplicates.
    *
    * @tparam T   Floating-point type (float or double).
-   * @param  pts Vector of 3D point coordinates as a 1D array.
+   * @param  pts Vector of 3D point coordinates as a 1D vector.
    */
   template <typename T>
   void ProcessPoints(const std::vector<T>& pts);
@@ -111,7 +110,7 @@ class MeshLoader {
 
   /**
    * @brief Constructs convex hull (in H-rep) and facet adjacency graph from
-   * the stored vector of points.
+   * the stored vector of points. Also returns an interior point.
    *
    * The convex hull is given by the set of inequalities:
    *    normal[i] * z + offset[i] <= 0    for 0 <= i < nfacet,
@@ -144,8 +143,8 @@ class MeshLoader {
                       std::vector<int>& graph, Vec3r& interior_point);
 
   /**
-   * @brief Computes the inradius of a polytope with respect to an interior
-   * point, given its H-rep and an interior point.
+   * @brief Computes the inradius of a polytope at an interior point, given
+   * its H-rep and the interior point.
    *
    * @param  normal         Facet normals of the convex hull.
    * @param  offset         Facet offsets of the convex hull.
@@ -166,8 +165,8 @@ class MeshLoader {
    * @param[in,out] interior_point A point in the convex hull interior.
    * @param         use_given_ip   Whether to compute the inradius about
    *                               interior_point or to compute a new interior
-   *                               point (default = false).
-   * @return        Inradius about the interior point.
+   *                               point.
+   * @return        Inradius at the interior point.
    */
   Real ComputeInradius(Vec3r& interior_point, bool use_given_ip = false);
 

@@ -35,8 +35,8 @@ namespace dgd {
  */
 template <int dim>
 struct SupportFunctionHint {
-  Vecr<dim> n_prev{Vecr<dim>::Zero()};
-  int idx_ws{-1};
+  Vecr<dim> n_prev = Vecr<dim>::Zero();
+  int idx_ws = -1;
 };
 
 /**
@@ -51,36 +51,7 @@ struct SupportFunctionHint {
  */
 template <int dim>
 class ConvexSet {
- protected:
-  /**
-   * @brief Initializes convex set properties.
-   *
-   * @see ConvexSet(Real inradius)
-   */
-  ConvexSet();
-
-  /**
-   * @brief Initializes convex set inradius.
-   *
-   * @param inradius Inradius for the convex set.
-   * @see inradius_
-   */
-  ConvexSet(Real inradius);
-
-  /**
-   * @brief Inradius for the convex set.
-   *
-   * Radius of a ball that is centered at the origin and contained in the set.
-   * Any number greater than 0 and less than the inradius will work. However,
-   * larger values can help prevent singularities in simplex computations and
-   * enable faster convergence.
-   */
-  Real inradius_;
-
  public:
-  /**
-   * @brief Destroys the Convex Set object.
-   */
   virtual ~ConvexSet() {}
 
   /**
@@ -104,17 +75,15 @@ class ConvexSet {
    * where \f$m\f$ is the safety margin. Note that the safety margin also
    * increases the inradius.
    *
-   * @attention A nonzero safety margin can result in slower convergence since
-   * it leads to the boundary of the convex set being a differentiable manifold;
-   * thus more iterations are needed for convergence.
+   * @attention A nonzero safety margin can result in slower convergence.
    *
    * @see RequireUnitNormal
    *
    * @param[in]     n    Normal vector.
-   * @param[out]    sp   Support point. A point at which the maximum for the
+   * @param[out]    sp   Support point. Any point at which the maximum for the
    *                     support function is attained.
    * @param[in,out] hint Additional hints.
-   * @return        Value of the support function at the normal vector.
+   * @return        Support function value at the normal vector.
    */
   virtual Real SupportFunction(
       const Vecr<dim>& n, Vecr<dim>& sp,
@@ -131,28 +100,26 @@ class ConvexSet {
    */
   virtual bool RequireUnitNormal() const = 0;
 
-  /**
-   * @brief Gets the dimension of the convex set.
-   *
-   * @return Dimension, given by the template parameter dim.
-   */
   static constexpr int dimension();
 
-  /**
-   * @brief Gets the inradius.
-   *
-   * @return Inradius.
-   * @see inradius_
-   */
   Real inradius() const;
 
-  /**
-   * @brief Sets the inradius.
-   *
-   * @param inradius Inradius (\f$> 0\f$).
-   * @see inradius_
-   */
   void set_inradius(Real inradius);
+
+ protected:
+  ConvexSet();
+
+  ConvexSet(Real inradius);
+
+  /**
+   * @brief Convex set inradius at the origin.
+   *
+   * Radius of a ball that is centered at the origin and contained in the set.
+   * Any number greater than 0 and less than the inradius will work. However,
+   * larger values can help prevent singularities in simplex computations and
+   * enable faster convergence.
+   */
+  Real inradius_;
 };
 
 template <int dim>

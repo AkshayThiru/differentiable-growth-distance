@@ -39,10 +39,8 @@ namespace dgd {
 class Mesh : public ConvexSet<3> {
  public:
   /**
-   * @brief Constructs a convex Mesh object.
-   *
-   * @attention The user must ensure that the mesh contains the origin in its
-   * interior and that the inradius is correct.
+   * @attention The mesh must contain the origin in its interior, and the
+   * inradius must be accurate.
    *
    * @see MeshLoader::MakeVertexGraph
    * @see MeshLoader::ComputeInradius
@@ -51,8 +49,8 @@ class Mesh : public ConvexSet<3> {
    * @param graph       Vertex adjacency graph of the mesh convex hull.
    * @param margin      Safety margin.
    * @param inradius    Polytope inradius.
-   * @param thresh      Support function threshold (default = 0.9).
-   * @param guess_level Guess level for the warm start index (default = 2).
+   * @param thresh      Support function threshold.
+   * @param guess_level Guess level for the warm start index.
    */
   explicit Mesh(const std::vector<Vec3r>& vert, const std::vector<int>& graph,
                 Real margin, Real inradius, Real thresh = Real(0.9),
@@ -71,28 +69,16 @@ class Mesh : public ConvexSet<3> {
 
   bool RequireUnitNormal() const final override;
 
-  /**
-   * @brief Gets the vertices of the mesh convex hull.
-   *
-   * @return Convex hull vertices.
-   */
   const std::vector<Vec3r>& vertices() const;
 
   /**
    * @brief Gets the vertex adjacency graph of the mesh convex hull.
    *
    * @see MeshLoader::MakeVertexGraph
-   *
-   * @return Vertex adjacency graph.
    */
   const std::vector<int>& graph() const;
 
-  /**
-   * @brief Returns the number of vertices in the mesh convex hull.
-   *
-   * @return Number of vertices.
-   */
-  int nvert() const;
+  int nvertices() const;
 
  private:
   std::vector<Vec3r> vert_; /**< Convex hull vertices. */
@@ -133,7 +119,7 @@ inline Mesh::Mesh(const std::vector<Vec3r>& vert, const std::vector<int>& graph,
   //  Select (0, 8, 20) uniformly distributed normal vectors.
   std::vector<Vec3r> normals;
   Vec3r n;
-  Real f[2]{1.0, -1.0};
+  Real f[2] = {1.0, -1.0};
   if (guess_level > 0) {
     // Add cube vertices.
     for (int i = 0; i < 8; ++i) {
@@ -142,9 +128,10 @@ inline Mesh::Mesh(const std::vector<Vec3r>& vert, const std::vector<int>& graph,
     }
   }
   if (guess_level > 1) {
-    const Real gr_inv{Real(2.0 / (1.0 + std::sqrt(5.0)))};
-    const Real ha{Real(1.0) + gr_inv};
-    const Real hb{Real(1.0) - gr_inv * gr_inv};
+    // Inverse of the golden ratio.
+    const Real gr_inv = Real(2.0 / (1.0 + std::sqrt(5.0)));
+    const Real ha = Real(1.0) + gr_inv;
+    const Real hb = Real(1.0) - gr_inv * gr_inv;
     // Add regular dodecahedron vertices.
     // See https://en.wikipedia.org/wiki/Dodecahedron#Cartesian_coordinates
     for (int i = 0; i < 4; ++i) {
@@ -170,12 +157,12 @@ inline Real Mesh::SupportFunction(const Vec3r& n, Vec3r& sp,
                                   SupportFunctionHint<3>* hint) const {
   // If the current normal is much different than the previous normal,
   // compute a new warm start index.
-  int idx_ws{hint ? hint->idx_ws : 0};
+  int idx_ws = hint ? hint->idx_ws : 0;
   if (hint && hint->n_prev.dot(n) < thresh_) {
     if (idx_ws0_.empty()) {
       idx_ws = 0;
     } else {
-      Real s{0.0}, smax{-kInf};
+      Real s = 0.0, smax = -kInf;
       for (int i : idx_ws0_) {
         if ((s = n.dot(vert_[i])) > smax) {
           idx_ws = i;
@@ -187,9 +174,9 @@ inline Real Mesh::SupportFunction(const Vec3r& n, Vec3r& sp,
 
   assert(idx_ws >= 0);
   // Current best index, neighbour index, previous best index.
-  int idx{idx_ws}, nidx{-1}, pidx{-1};
+  int idx = idx_ws, nidx = -1, pidx = -1;
   // Current support value, current best support value.
-  Real s{0.0}, sv{n.dot(vert_[idx])};
+  Real s = 0.0, sv = n.dot(vert_[idx]);
 
   // Hill-climbing.
   do {
@@ -219,7 +206,7 @@ inline const std::vector<Vec3r>& Mesh::vertices() const { return vert_; }
 
 inline const std::vector<int>& Mesh::graph() const { return graph_; }
 
-inline int Mesh::nvert() const { return nvert_; }
+inline int Mesh::nvertices() const { return nvert_; }
 
 }  // namespace dgd
 

@@ -27,6 +27,9 @@
 
 #include <cmath>
 #include <csetjmp>
+#include <stdexcept>
+#include <string>
+#include <vector>
 
 #define TINYOBJLOADER_IMPLEMENTATION  // define this in only *one* .cc
 // Optional. define TINYOBJLOADER_USE_MAPBOX_EARCUT gives robust triangulation.
@@ -38,9 +41,11 @@ extern "C" {
 #include "libqhull_r/qhull_ra.h"
 }
 
+#include "dgd/data_types.h"
+
 namespace dgd {
 
-// load OBJ mesh
+// load Obj mesh
 void MeshLoader::LoadObj(const std::string& input, bool is_file) {
   tinyobj::ObjReader objReader;
 
@@ -475,7 +480,7 @@ bool MeshLoader::MakeFacetGraph(std::vector<Vec3r>& normal,
 Real MeshLoader::ComputeInradius(const std::vector<Vec3r>& normal,
                                  const std::vector<Real>& offset,
                                  const Vec3r& interior_point) const {
-  Real max{-kInf}, eqn;
+  Real max = -kInf, eqn;
   for (int i = 0; i < static_cast<int>(normal.size()); ++i) {
     eqn = normal[i].dot(interior_point) + offset[i];
     if (eqn >= 0.0) {
@@ -491,13 +496,13 @@ Real MeshLoader::ComputeInradius(Vec3r& interior_point, bool use_given_ip) {
   std::vector<Vec3r> normal;
   std::vector<Real> offset;
   std::vector<int> graph;
-  Vec3r ipc;
-  bool valid{MakeFacetGraph(normal, offset, graph, ipc)};
+  Vec3r ip_c;
+  bool valid{MakeFacetGraph(normal, offset, graph, ip_c)};
   if (!valid) {
     throw std::runtime_error("Qhull error");
   }
 
-  if (!use_given_ip) interior_point = ipc;
+  if (!use_given_ip) interior_point = ip_c;
   return ComputeInradius(normal, offset, interior_point);
 }
 

@@ -36,8 +36,6 @@ namespace dgd {
 class Ellipsoid : public ConvexSet<3> {
  public:
   /**
-   * @brief Constructs an Ellipsoid object.
-   *
    * @param hlx,hly,hlz Half axis lengths.
    * @param margin      Safety margin.
    */
@@ -72,8 +70,8 @@ inline Ellipsoid::Ellipsoid(Real hlx, Real hly, Real hlz, Real margin)
 
 inline Real Ellipsoid::SupportFunction(const Vec3r& n, Vec3r& sp,
                                        SupportFunctionHint<3>* /*hint*/) const {
-  const Real k{std::sqrt(hlx2_ * n(0) * n(0) + hly2_ * n(1) * n(1) +
-                         hlz2_ * n(2) * n(2))};
+  const Real k = std::sqrt(hlx2_ * n(0) * n(0) + hly2_ * n(1) * n(1) +
+                           hlz2_ * n(2) * n(2));
   sp(0) = (hlx2_ / k + margin_) * n(0);
   sp(1) = (hly2_ / k + margin_) * n(1);
   sp(2) = (hlz2_ / k + margin_) * n(2);

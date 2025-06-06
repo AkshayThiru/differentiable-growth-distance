@@ -42,7 +42,9 @@ struct SolutionError {
    * = \left|\frac{\text{growth_dist_ub}}{\text{growth_dist_lb}} - 1\right|.
    * \f]
    * When the growth distance algorithm converges, this error is less than the
-   * specified value of rel_tol.
+   * specified tolerance.
+   *
+   * @see Settings.rel_tol
    */
   double prim_dual_gap;
 
@@ -54,8 +56,7 @@ struct SolutionError {
    * \text{prim_feas_err}
    * = | p_1 - p_2 + \text{growth_dist_ub} \cdot (z_1 - p_1 - (z_2 - p_2))|_2,
    * \f]
-   * where \f$p_1\f$ and \f$p_2\f$ are the center positions of the
-   * convex sets.
+   * where \f$p_1\f$ and \f$p_2\f$ are the center points of the convex sets.
    */
   double prim_feas_err;
 
@@ -65,41 +66,41 @@ struct SolutionError {
    * The growth distance algorithm always ensures dual feasibility, so this
    * error is zero.
    */
-  double dual_feas_err{0.0};
+  double dual_feas_err = 0.0;
 };
 
 /**
- * @brief Gets the primal-dual relative gap and the primal feasibility error.
+ * @brief Computes the primal-dual relative gap and the primal feasibility
+ * error.
  *
  * @param  set1,set2 Convex Sets.
  * @param  tf1,tf2   Rigid body transformations for the convex sets.
  * @param  out       Solver output.
- * @return Solution error.
  */
 template <int dim>
-SolutionError GetSolutionError(const ConvexSet<dim>* set1,
-                               const Transformr<dim>& tf1,
-                               const ConvexSet<dim>* set2,
-                               const Transformr<dim>& tf2,
-                               const Output<dim>& out) {
+SolutionError ComputeSolutionError(const ConvexSet<dim>* set1,
+                                   const Transformr<dim>& tf1,
+                                   const ConvexSet<dim>* set2,
+                                   const Transformr<dim>& tf2,
+                                   const Output<dim>& out) {
   SolutionError err{};
   if (out.status == SolutionStatus::CoincidentCenters) {
-    err.prim_feas_err = err.prim_dual_gap = 0.0;
+    err.prim_dual_gap = err.prim_feas_err = 0.0;
     return err;
-  } else if (out.status == SolutionStatus::MaxIterReached) {
-    err.prim_feas_err = err.prim_dual_gap = kInf;
+  } else if (out.status != SolutionStatus::Optimal) {
+    err.prim_dual_gap = err.prim_feas_err = kInf;
     return err;
   }
 
-  const Vecr<dim> p1{tf1.template block<dim, 1>(0, dim)};
-  const Vecr<dim> p2{tf2.template block<dim, 1>(0, dim)};
-  const Rotationr<dim> rot1{tf1.template block<dim, dim>(0, 0)};
-  const Rotationr<dim> rot2{tf2.template block<dim, dim>(0, 0)};
+  const Vecr<dim> p1 = tf1.template block<dim, 1>(0, dim);
+  const Vecr<dim> p2 = tf2.template block<dim, 1>(0, dim);
+  const Rotationr<dim> rot1 = tf1.template block<dim, dim>(0, 0);
+  const Rotationr<dim> rot2 = tf2.template block<dim, dim>(0, 0);
 
   Vecr<dim> sp;
-  const Real sv1{set1->SupportFunction(rot1.transpose() * out.normal, sp)};
-  const Real sv2{set2->SupportFunction(-rot2.transpose() * out.normal, sp)};
-  const Real lb{(p2 - p1).dot(out.normal) / (sv1 + sv2)};
+  const Real sv1 = set1->SupportFunction(rot1.transpose() * out.normal, sp);
+  const Real sv2 = set2->SupportFunction(-rot2.transpose() * out.normal, sp);
+  const Real lb = (p2 - p1).dot(out.normal) / (sv1 + sv2);
 
   err.prim_dual_gap = std::abs(out.growth_dist_ub / lb - 1.0);
   err.prim_feas_err =
@@ -128,23 +129,23 @@ bool AssertCollisionStatus(const ConvexSet<dim>* set1,
     return !collision;
   }
 
-  const Vecr<dim> p1{tf1.template block<dim, 1>(0, dim)};
-  const Vecr<dim> p2{tf2.template block<dim, 1>(0, dim)};
-  const Rotationr<dim> rot1{tf1.template block<dim, dim>(0, 0)};
-  const Rotationr<dim> rot2{tf2.template block<dim, dim>(0, 0)};
+  const Vecr<dim> p1 = tf1.template block<dim, 1>(0, dim);
+  const Vecr<dim> p2 = tf2.template block<dim, 1>(0, dim);
+  const Rotationr<dim> rot1 = tf1.template block<dim, dim>(0, 0);
+  const Rotationr<dim> rot2 = tf2.template block<dim, dim>(0, 0);
 
   if (collision) {
 #ifdef DGD_COMPUTE_COLLISION_INTERSECTION
-    const Real prim_feas_err{
-        (p1 - p2 + out.growth_dist_ub * (out.z1 - p1 - out.z2 + p2)).norm()};
+    const Real prim_feas_err =
+        (p1 - p2 + out.growth_dist_ub * (out.z1 - p1 - out.z2 + p2)).norm();
     return (out.growth_dist_ub <= 1.0) && (prim_feas_err <= kSqrtEps);
 #else
     return (out.growth_dist_ub <= 1.0);
 #endif
   } else {
     Vecr<dim> sp;
-    const Real sv1{set1->SupportFunction(rot1.transpose() * out.normal, sp)};
-    const Real sv2{set2->SupportFunction(-rot2.transpose() * out.normal, sp)};
+    const Real sv1 = set1->SupportFunction(rot1.transpose() * out.normal, sp);
+    const Real sv2 = set2->SupportFunction(-rot2.transpose() * out.normal, sp);
     return (out.growth_dist_lb > 1.0) &&
            (p2.dot(out.normal) - sv2 > p1.dot(out.normal) + sv1);
   }

@@ -42,15 +42,14 @@ typedef double Real;
  * @brief Infinity.
  *
  * @note This constant is only used for the initial lower bound for the growth
- * distance algorithm. For a pair of convex sets with circumradii \f$R_1\f$ and
- * \f$R_2\f$, kInf can be any number greater than \f$R_1 + R_2\f$.
+ * distance algorithm. For a pair of convex sets, kInf can be any number greater
+ * than the sum of their circumradii.
  */
-constexpr Real kInf{std::numeric_limits<Real>::infinity()};
-constexpr Real kEps{
-    std::numeric_limits<Real>::epsilon()}; /**< Machine epsilon. */
-constexpr Real kSqrtEps{
-    std::sqrt(kEps)}; /**< Square root of machine epsilon. */
-constexpr Real kPi{static_cast<Real>(EIGEN_PI)}; /**< Pi. */
+constexpr Real kInf = std::numeric_limits<Real>::infinity();
+constexpr Real kEps =
+    std::numeric_limits<Real>::epsilon(); /**< Machine epsilon. */
+constexpr Real kSqrtEps = std::sqrt(kEps);
+constexpr Real kPi = static_cast<Real>(EIGEN_PI);
 
 /**
  * @brief Fixed-dimension vector.
@@ -62,22 +61,16 @@ template <typename T, int dim>
 using Vec = Eigen::Vector<T, dim>;
 template <int dim>
 using Vecr = Vec<Real, dim>;
-typedef Vecr<2> Vec2r;
-typedef Vecr<3> Vec3r;
+using Vec2r = Vecr<2>;
+using Vec3r = Vecr<3>;
 
 /**
- * @brief Alias for Eigen::MatrixBase.
- */
-template <typename Derived>
-using MatrixBase = Eigen::MatrixBase<Derived>;
-
-/**
- * @brief Fixed-size matrix.
+ * @brief Fixed-size real-valued matrix.
  *
  * @note Vectors are stored along columns.
  *
- * @tparam row Number of rows of the matrix.
- * @tparam col Number of columns of the matrix.
+ * @tparam row Number of rows.
+ * @tparam col Number of columns.
  */
 template <int row, int col>
 using Matr = Eigen::Matrix<Real, row, col>;
@@ -89,8 +82,8 @@ using Matr = Eigen::Matrix<Real, row, col>;
  */
 template <int dim>
 using Rotationr = Matr<dim, dim>;
-typedef Rotationr<2> Rotation2r;
-typedef Rotationr<3> Rotation3r;
+using Rotation2r = Rotationr<2>;
+using Rotation3r = Rotationr<3>;
 
 /**
  * @brief Rigid body transformation matrix.
@@ -105,8 +98,8 @@ typedef Rotationr<3> Rotation3r;
  */
 template <int dim>
 using Transformr = Matr<dim + 1, dim + 1>;
-typedef Transformr<2> Transform2r;
-typedef Transformr<3> Transform3r;
+using Transform2r = Transformr<2>;
+using Transform3r = Transformr<3>;
 
 }  // namespace dgd
 

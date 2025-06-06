@@ -38,19 +38,13 @@ namespace dgd {
 class Polytope : public ConvexSet<3> {
  public:
   /**
-   * @brief Constructs a Polytope object.
-   *
    * @attention When used as a standalone set, the polytope must contain the
-   * origin in its interior. This property is not enforced and must be
-   * guaranteed by the user, whenever necessary.
-   *
-   * @see MeshLoader::ProcessPoints(const std::vector<Vec3r>&)
-   * @see MeshLoader::MakeVertexGraph
+   * origin in its interior.
    *
    * @param vert     Vector of n three-dimensional vertices.
    * @param margin   Safety margin.
    * @param inradius Polytope inradius.
-   * @param thresh   Support function threshold (default = 0.75).
+   * @param thresh   Support function threshold.
    */
   explicit Polytope(const std::vector<Vec3r>& vert, Real margin, Real inradius,
                     Real thresh = Real(0.75));
@@ -63,19 +57,9 @@ class Polytope : public ConvexSet<3> {
 
   bool RequireUnitNormal() const final override;
 
-  /**
-   * @brief Gets the polytope vertices.
-   *
-   * @return Polytope vertices.
-   */
   const std::vector<Vec3r>& vertices() const;
 
-  /**
-   * @brief Returns the number of vertices in the polytope.
-   *
-   * @return Number of vertices.
-   */
-  int nvert() const;
+  int nvertices() const;
 
  private:
   const std::vector<Vec3r> vert_; /**< Polytope vertices. */
@@ -94,7 +78,7 @@ inline Polytope::Polytope(const std::vector<Vec3r>& vert, Real margin,
     throw std::domain_error("Invalid margin or inradius");
   }
 
-  // const int nvert{static_cast<int>(vert.size())};
+  // const int nvert = static_cast<int>(vert.size());
   // if (nvert < 4) {
   //   throw std::domain_error("Polytope is not solid");
   // }
@@ -102,7 +86,7 @@ inline Polytope::Polytope(const std::vector<Vec3r>& vert, Real margin,
   // Matr<3, -1> aff_vert(3, nvert - 1);
   // for (int i = 1; i < nvert; ++i) aff_vert.col(i - 1) = vert[i] - vert[0];
   // const Eigen::ColPivHouseholderQR<Matr<3, -1>> qr(aff_vert);
-  // const int rank{static_cast<int>(qr.rank())};
+  // const int rank = static_cast<int>(qr.rank());
   // if (rank != 3) {
   //   throw std::domain_error("Polytope is not solid");
   // }
@@ -111,10 +95,10 @@ inline Polytope::Polytope(const std::vector<Vec3r>& vert, Real margin,
 inline Real Polytope::SupportFunction(const Vec3r& n, Vec3r& sp,
                                       SupportFunctionHint<3>* hint) const {
   // Current best index.
-  int idx{(hint && hint->n_prev.dot(n) > thresh_) ? hint->idx_ws : 0};
+  int idx = (hint && hint->n_prev.dot(n) > thresh_) ? hint->idx_ws : 0;
   assert(idx >= 0);
   // Current support value, current best support value.
-  Real s{0.0}, sv{n.dot(vert_[idx])};
+  Real s = 0.0, sv = n.dot(vert_[idx]);
 
   for (int i = 0; i < static_cast<int>(vert_.size()); ++i) {
     s = n.dot(vert_[i]);
@@ -137,7 +121,9 @@ inline bool Polytope::RequireUnitNormal() const { return (margin_ > 0.0); }
 
 inline const std::vector<Vec3r>& Polytope::vertices() const { return vert_; }
 
-inline int Polytope::nvert() const { return static_cast<int>(vert_.size()); }
+inline int Polytope::nvertices() const {
+  return static_cast<int>(vert_.size());
+}
 
 }  // namespace dgd
 

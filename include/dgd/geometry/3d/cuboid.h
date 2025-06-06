@@ -36,8 +36,6 @@ namespace dgd {
 class Cuboid : public ConvexSet<3> {
  public:
   /**
-   * @brief Constructs a Cuboid object.
-   *
    * @param hlx,hly,hlz Half side lengths.
    * @param margin      Safety margin.
    */

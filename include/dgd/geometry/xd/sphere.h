@@ -35,16 +35,14 @@ namespace dgd {
  * @tparam dim Dimension of the sphere.
  */
 template <int dim>
-class TSphere : public ConvexSet<dim> {
+class SphereImpl : public ConvexSet<dim> {
  public:
   /**
-   * @brief Constructs a Sphere object.
-   *
    * @param radius Radius.
    */
-  explicit TSphere(Real radius);
+  explicit SphereImpl(Real radius);
 
-  ~TSphere() = default;
+  ~SphereImpl() = default;
 
   Real SupportFunction(
       const Vecr<dim>& n, Vecr<dim>& sp,
@@ -57,16 +55,16 @@ class TSphere : public ConvexSet<dim> {
 };
 
 template <int dim>
-inline TSphere<dim>::TSphere(Real radius)
+inline SphereImpl<dim>::SphereImpl(Real radius)
     : ConvexSet<dim>(radius), radius_(radius) {
-  static_assert((dim == 2) || (dim == 3), "Incompatible dim");
+  static_assert((dim == 2) || (dim == 3), "dim is not 2 or 3");
   if (radius <= 0.0) {
     throw std::domain_error("Radius is nonpositive");
   }
 }
 
 template <int dim>
-inline Real TSphere<dim>::SupportFunction(
+inline Real SphereImpl<dim>::SupportFunction(
     const Vecr<dim>& n, Vecr<dim>& sp,
     SupportFunctionHint<dim>* /*hint*/) const {
   sp = radius_ * n;
@@ -74,12 +72,12 @@ inline Real TSphere<dim>::SupportFunction(
 }
 
 template <int dim>
-inline bool TSphere<dim>::RequireUnitNormal() const {
+inline bool SphereImpl<dim>::RequireUnitNormal() const {
   return true;
 }
 
-typedef TSphere<2> Circle;
-typedef TSphere<3> Sphere;
+using Circle = SphereImpl<2>;
+using Sphere = SphereImpl<3>;
 
 }  // namespace dgd
 

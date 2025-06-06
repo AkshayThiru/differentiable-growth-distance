@@ -16,7 +16,7 @@
  * @file settings.h
  * @author Akshay Thirugnanam (akshay_t@berkeley.edu)
  * @date 2025-02-18
- * @brief Solver settings struct.
+ * @brief Solver settings.
  */
 
 #ifndef DGD_SETTINGS_H_
@@ -31,13 +31,12 @@ namespace dgd {
  */
 struct Settings {
   /**
-   * @brief Minimum distance between the centers of the convex sets (\f$> 0\f$).
+   * @brief Minimum distance between the center points of the convex sets.
    *
-   * If the center positions of the two convex sets are \f$p_1\f$ and \f$p_2\f$
-   * (corresponding to the rigid body transformations), and \f$|p_1 - p_2| <\f$
-   * min_center_dist, then the growth distance is set to zero.
+   * If the distance between the center points of the two convex sets is less
+   * than this value, the growth distance is set to zero.
    */
-  Real min_center_dist{kSqrtEps};
+  Real min_center_dist = kSqrtEps;
 
   /**
    * @brief Relative tolerance between the upper and lower bounds of the growth
@@ -48,12 +47,12 @@ struct Settings {
    * lb \leq ub \leq (\text{rel_tol}) \ lb.
    * \f]
    */
-  Real rel_tol{Real(1.0) + kSqrtEps};
+  Real rel_tol = Real(1.0) + kSqrtEps;
 
   /**
-   * @brief Maximum number of solver iterations (\f$> 1\f$).
+   * @brief Maximum number of solver iterations.
    */
-  int max_iter{100};
+  int max_iter = 100;
 };
 
 }  // namespace dgd
