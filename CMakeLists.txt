@@ -10,7 +10,7 @@ project(
 message(STATUS "C++ compiler: ${CMAKE_CXX_COMPILER_ID}")
 ## User flags
 #   Compile flags
-option(DGD_USE_FFAST_MATH "Add -ffast-math compile option" OFF)
+# option(DGD_USE_FFAST_MATH "Add -ffast-math compile option" OFF)
 
 #   Preprocessor definitions
 option(DGD_USE_32BIT_FLOAT                "Use 32-bit floating point" OFF)
@@ -79,7 +79,7 @@ endif()
 
 # Tests, bechmarks, and documentation
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-  option(DGD_BUILD_TESTS      "Build tests" ON)
+  option(DGD_BUILD_TESTS      "Build tests" OFF)
   option(DGD_BUILD_BENCHMARKS "Build benchmarks (only for Release config with double precision)" OFF)
   option(DGD_BUILD_DOCS       "Build documentation" OFF)
 
