@@ -24,7 +24,7 @@ int main(int argc, char** argv) {
   dgd::internal::MeshProperties mp;
   for (const auto& filename : filenames) {
     try {
-      dgd::internal::SetVertexMeshFromObjFile(filename, mp);
+      mp.SetVertexMeshFromObjFile(filename);
       std::cout << "[Success] " << filename << std::endl;
     } catch (const std::runtime_error& e) {
       std::cerr << "[Error] Qhull error with file: '" << filename

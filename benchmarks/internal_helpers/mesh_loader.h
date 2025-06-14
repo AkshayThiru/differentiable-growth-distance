@@ -19,28 +19,31 @@ struct MeshProperties {
   Real inradius = 0.0;
   int nvert = 0;
   int nfacet = 0;
+
+  // Sets vertex and facets meshes from .obj file.
+  void SetVertexMeshFromObjFile(const std::string& filename);
+
+  void SetFacetMeshFromObjFile(const std::string& filename);
+
+  // Set facet mesh from vertices.
+  void SetFacetMeshFromVertices(const std::vector<Vec3r>& vert);
+
+  // Sets the center of the vertex mesh as the origin.
+  void SetZeroVertexCenter();
+
+  // Sets the center of the facet mesh as the origin.
+  void SetZeroFacetCenter();
 };
 
-// Sets vertex and facets meshes from .obj file.
-void SetVertexMeshFromObjFile(const std::string& filename, MeshProperties& mp);
-
-void SetFacetMeshFromObjFile(const std::string& filename, MeshProperties& mp);
-
-// Set facet mesh from vertices.
-void SetFacetMeshFromVertices(const std::vector<Vec3r>& vert,
-                              MeshProperties& mp);
-
-// Sets the center of the vertex mesh as the origin.
-inline void SetZeroVertexCenter(MeshProperties& mp) {
-  for (auto& v : mp.vert) {
-    v -= mp.interior_point;
+inline void MeshProperties::SetZeroVertexCenter() {
+  for (auto& v : vert) {
+    v -= interior_point;
   }
 }
 
-// Sets the center of the facet mesh as the origin.
-inline void SetZeroFacetCenter(MeshProperties& mp) {
-  for (int i = 0; i < mp.nfacet; ++i) {
-    mp.offset[i] += mp.normal[i].dot(mp.interior_point);
+inline void MeshProperties::SetZeroFacetCenter() {
+  for (int i = 0; i < nfacet; ++i) {
+    offset[i] += normal[i].dot(interior_point);
   }
 }
 

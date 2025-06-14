@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "dgd/data_types.h"
-#include "internal_helpers/mesh_loader.h"
 
 namespace dgd {
 

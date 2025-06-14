@@ -19,6 +19,7 @@
 #include "dgd/geometry/xd/sphere.h"
 #include "dgd/graham_scan.h"
 #include "dgd/utils.h"
+#include "internal_helpers/mesh_loader.h"
 
 namespace dgd {
 
@@ -76,11 +77,11 @@ void ConvexSetGenerator::LoadMeshesFromObjFiles(
   MeshProperties mp{};
   for (const auto& filename : filenames) {
     try {
-      SetVertexMeshFromObjFile(filename, mp);
+      mp.SetVertexMeshFromObjFile(filename);
     } catch (const std::runtime_error& e) {
       continue;
     }
-    SetZeroVertexCenter(mp);
+    mp.SetZeroVertexCenter();
 
     meshes_.push_back(
         std::make_shared<Mesh>(mp.vert, mp.vgraph, 0.0, mp.inradius));
