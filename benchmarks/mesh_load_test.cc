@@ -25,7 +25,8 @@ int main(int argc, char** argv) {
   for (const auto& filename : filenames) {
     try {
       mp.SetVertexMeshFromObjFile(filename);
-      std::cout << "[Success] " << filename << std::endl;
+      std::cout << "[Success] " << filename << std::endl
+                << "  #vertices: " << mp.nvert << std::endl;
     } catch (const std::runtime_error& e) {
       std::cerr << "[Error] Qhull error with file: '" << filename
                 << "': " << e.what() << std::endl;
