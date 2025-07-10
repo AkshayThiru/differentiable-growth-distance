@@ -19,9 +19,9 @@
 #include "internal_helpers/utils.h"
 
 constexpr double position_lim = 5.0;
-constexpr double dx_max = 0.1, ang_max = dgd::kPi / 20.0;
+constexpr double dx_max = 0.1, ang_max = dgd::kPi / 18.0;
 constexpr int ncold = 100;
-constexpr int nwarm = 500;
+constexpr int nwarm = 100;
 
 template <int dim>
 struct OptimalSolution {
@@ -192,8 +192,8 @@ int main(int argc, char** argv) {
     dgd::SetDefaultSeed();
   };
 
-  const int npair = 100;
-  const int npose_c = 100, npose_w = 10;
+  const int npair = 1000;
+  const int npose_c = 100, npose_w = 100;
   // Benchmarks.
   //  1. Dynamic dispatch: (frustum + ellipsoid, cold-start).
   {
