@@ -39,7 +39,7 @@ class Ellipsoid : public ConvexSet<3> {
    * @param hlx,hly,hlz Half axis lengths.
    * @param margin      Safety margin.
    */
-  explicit Ellipsoid(Real hlx, Real hly, Real hlz, Real margin);
+  explicit Ellipsoid(Real hlx, Real hly, Real hlz, Real margin = 0.0);
 
   ~Ellipsoid() = default;
 
@@ -48,6 +48,8 @@ class Ellipsoid : public ConvexSet<3> {
       SupportFunctionHint<3>* /*hint*/ = nullptr) const final override;
 
   bool RequireUnitNormal() const final override;
+
+  bool IsPolytopic() const final override;
 
  private:
   const Real hlx2_;   /**< Square of the half x-axis length. */
@@ -79,6 +81,8 @@ inline Real Ellipsoid::SupportFunction(const Vec3r& n, Vec3r& sp,
 }
 
 inline bool Ellipsoid::RequireUnitNormal() const { return (margin_ > 0.0); }
+
+inline bool Ellipsoid::IsPolytopic() const { return false; }
 
 }  // namespace dgd
 

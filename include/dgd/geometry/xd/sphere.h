@@ -50,6 +50,8 @@ class SphereImpl : public ConvexSet<dim> {
 
   bool RequireUnitNormal() const final override;
 
+  bool IsPolytopic() const final override;
+
  private:
   const Real radius_; /**< Radius. */
 };
@@ -74,6 +76,11 @@ inline Real SphereImpl<dim>::SupportFunction(
 template <int dim>
 inline bool SphereImpl<dim>::RequireUnitNormal() const {
   return true;
+}
+
+template <int dim>
+inline bool SphereImpl<dim>::IsPolytopic() const {
+  return false;
 }
 
 using Circle = SphereImpl<2>;

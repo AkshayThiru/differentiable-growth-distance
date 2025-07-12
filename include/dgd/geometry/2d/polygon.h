@@ -42,10 +42,11 @@ class Polygon : public ConvexSet<2> {
    * @see ComputePolygonInradius
    *
    * @param vert     Vector of n two-dimensional vertices.
-   * @param margin   Safety margin.
    * @param inradius Polygon inradius.
+   * @param margin   Safety margin.
    */
-  explicit Polygon(const std::vector<Vec2r>& vert, Real margin, Real inradius);
+  explicit Polygon(const std::vector<Vec2r>& vert, Real inradius,
+                   Real margin = 0.0);
 
   ~Polygon() = default;
 
@@ -55,13 +56,15 @@ class Polygon : public ConvexSet<2> {
 
   bool RequireUnitNormal() const final override;
 
+  bool IsPolytopic() const final override;
+
  private:
   const std::vector<Vec2r> vert_; /**< Polygon vertices. */
   const Real margin_;             /**< Safety margin. */
 };
 
-inline Polygon::Polygon(const std::vector<Vec2r>& vert, Real margin,
-                        Real inradius)
+inline Polygon::Polygon(const std::vector<Vec2r>& vert, Real inradius,
+                        Real margin)
     : ConvexSet<2>(margin + inradius), vert_(vert), margin_(margin) {
   if ((margin < 0.0) || (inradius <= 0.0)) {
     throw std::domain_error("Invalid margin or inradius");
@@ -90,6 +93,8 @@ inline Real Polygon::SupportFunction(const Vec2r& n, Vec2r& sp,
 }
 
 inline bool Polygon::RequireUnitNormal() const { return (margin_ > 0.0); }
+
+inline bool Polygon::IsPolytopic() const { return (margin_ == 0.0); }
 
 }  // namespace dgd
 

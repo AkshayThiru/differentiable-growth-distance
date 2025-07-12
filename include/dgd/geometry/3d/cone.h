@@ -47,7 +47,7 @@ class Cone : public ConvexSet<3> {
    * @param height Height.
    * @param margin Safety margin.
    */
-  explicit Cone(Real radius, Real height, Real margin);
+  explicit Cone(Real radius, Real height, Real margin = 0.0);
 
   ~Cone() = default;
 
@@ -56,6 +56,8 @@ class Cone : public ConvexSet<3> {
       SupportFunctionHint<3>* /*hint*/ = nullptr) const final override;
 
   bool RequireUnitNormal() const final override;
+
+  bool IsPolytopic() const final override;
 
   /**
    * @brief Gets the z-offset of the base of the cone.
@@ -100,6 +102,8 @@ inline Real Cone::SupportFunction(const Vec3r& n, Vec3r& sp,
 }
 
 inline bool Cone::RequireUnitNormal() const { return (margin_ > 0.0); }
+
+inline bool Cone::IsPolytopic() const { return false; }
 
 inline Real Cone::offset() const { return rho_; }
 

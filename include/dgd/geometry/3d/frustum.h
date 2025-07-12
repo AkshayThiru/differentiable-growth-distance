@@ -54,7 +54,8 @@ class Frustum : public ConvexSet<3> {
    * @param height      Height.
    * @param margin      Safety margin.
    */
-  explicit Frustum(Real base_radius, Real top_radius, Real height, Real margin);
+  explicit Frustum(Real base_radius, Real top_radius, Real height,
+                   Real margin = 0.0);
 
   ~Frustum() = default;
 
@@ -63,6 +64,8 @@ class Frustum : public ConvexSet<3> {
       SupportFunctionHint<3>* /*hint*/ = nullptr) const final override;
 
   bool RequireUnitNormal() const final override;
+
+  bool IsPolytopic() const final override;
 
   /**
    * @brief Gets the z-offset of the base of the frustum.
@@ -118,6 +121,8 @@ inline Real Frustum::SupportFunction(const Vec3r& n, Vec3r& sp,
 }
 
 inline bool Frustum::RequireUnitNormal() const { return (margin_ > 0.0); }
+
+inline bool Frustum::IsPolytopic() const { return false; }
 
 inline Real Frustum::offset() const { return offset_; }
 

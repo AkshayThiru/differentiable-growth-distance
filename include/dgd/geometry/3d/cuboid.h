@@ -39,7 +39,7 @@ class Cuboid : public ConvexSet<3> {
    * @param hlx,hly,hlz Half side lengths.
    * @param margin      Safety margin.
    */
-  explicit Cuboid(Real hlx, Real hly, Real hlz, Real margin);
+  explicit Cuboid(Real hlx, Real hly, Real hlz, Real margin = 0.0);
 
   ~Cuboid() = default;
 
@@ -48,6 +48,8 @@ class Cuboid : public ConvexSet<3> {
       SupportFunctionHint<3>* /*hint*/ = nullptr) const final override;
 
   bool RequireUnitNormal() const final override;
+
+  bool IsPolytopic() const final override;
 
  private:
   const Real hlx_;    /**< Half x-axis side length. */
@@ -74,6 +76,8 @@ inline Real Cuboid::SupportFunction(const Vec3r& n, Vec3r& sp,
 }
 
 inline bool Cuboid::RequireUnitNormal() const { return (margin_ > 0.0); }
+
+inline bool Cuboid::IsPolytopic() const { return (margin_ == 0.0); }
 
 }  // namespace dgd
 

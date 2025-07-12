@@ -99,7 +99,7 @@ TEST(PolygonTest, SupportFunction) {
   GrahamScan(pts, vert);
   Real inradius = ComputePolygonInradius(vert, Vec2r::Zero());
 
-  auto set = Polygon(vert, margin, inradius);
+  auto set = Polygon(vert, inradius, margin);
 
   EXPECT_EQ(set.inradius(), inradius + margin);
 
@@ -359,8 +359,8 @@ TEST(MeshTest, SupportFunction) {
 
     ASSERT_TRUE(valid);
 
-    auto polytope = Polytope(vert, margin, inradius);
-    auto mesh = Mesh(vert, graph, margin, inradius);
+    auto polytope = Polytope(vert, inradius, margin);
+    auto mesh = Mesh(vert, graph, inradius, margin);
 
     // Support function test.
     for (int j = 0; j < normals.cols(); ++j) {
@@ -394,7 +394,7 @@ TEST(PolytopeTest, SupportFunction) {
   Vec3r interior_point = Vec3r::Zero();
   Real inradius = ml.ComputeInradius(interior_point);
 
-  auto set = Polytope(vert, margin, inradius);
+  auto set = Polytope(vert, inradius, margin);
 
   EXPECT_EQ(set.inradius(), inradius + margin);
 

@@ -100,6 +100,11 @@ class ConvexSet {
    */
   virtual bool RequireUnitNormal() const = 0;
 
+  /**
+   * @brief Returns true if the convex set is polytopic.
+   */
+  virtual bool IsPolytopic() const = 0;
+
   static constexpr int dimension();
 
   Real inradius() const;

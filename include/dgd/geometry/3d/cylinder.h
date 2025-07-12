@@ -42,7 +42,7 @@ class Cylinder : public ConvexSet<3> {
    * @param radius Radius.
    * @param margin Safety margin.
    */
-  explicit Cylinder(Real hlx, Real radius, Real margin);
+  explicit Cylinder(Real hlx, Real radius, Real margin = 0.0);
 
   ~Cylinder() = default;
 
@@ -51,6 +51,8 @@ class Cylinder : public ConvexSet<3> {
       SupportFunctionHint<3>* /*hint*/ = nullptr) const final override;
 
   bool RequireUnitNormal() const final override;
+
+  bool IsPolytopic() const final override;
 
  private:
   const Real hlx_;    /**< Half axis length. */
@@ -76,6 +78,8 @@ inline Real Cylinder::SupportFunction(const Vec3r& n, Vec3r& sp,
 }
 
 inline bool Cylinder::RequireUnitNormal() const { return (margin_ > 0.0); }
+
+inline bool Cylinder::IsPolytopic() const { return false; }
 
 }  // namespace dgd
 

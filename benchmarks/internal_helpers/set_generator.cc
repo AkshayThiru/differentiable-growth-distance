@@ -73,7 +73,7 @@ void ConvexSetGenerator::LoadMeshesFromObjFiles(
     mp.SetZeroVertexCenter();
 
     meshes_.push_back(
-        std::make_shared<Mesh>(mp.vert, mp.vgraph, 0.0, mp.inradius));
+        std::make_shared<Mesh>(mp.vert, mp.vgraph, mp.inradius, 0.0));
   }
   nmeshes_ = static_cast<int>(meshes_.size());
 }
@@ -96,7 +96,7 @@ ConvexSetPtr<2> ConvexSetGenerator::GetPrimitiveSet(Primitive2D type) {
         }
         CenterVertices(polygon_vert_);
 
-        return std::make_shared<Polygon>(polygon_vert_, 0.0, kEps);
+        return std::make_shared<Polygon>(polygon_vert_, kEps, 0.0);
       }
       */
 
@@ -180,7 +180,7 @@ ConvexSetPtr<3> ConvexSetGenerator::GetPrimitiveSet(FlatPrimitive3D type) {
         }
         CenterVertices(polytope_vert_);
 
-        return std::make_shared<Polytope>(polytope_vert_, 0.0, kEps);
+        return std::make_shared<Polytope>(polytope_vert_, kEps, 0.0);
       }
       */
 

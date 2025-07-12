@@ -46,7 +46,7 @@ class CapsuleImpl : public ConvexSet<dim> {
    * @param radius Radius.
    * @param margin Safety margin.
    */
-  explicit CapsuleImpl(Real hlx, Real radius, Real margin);
+  explicit CapsuleImpl(Real hlx, Real radius, Real margin = 0.0);
 
   ~CapsuleImpl() = default;
 
@@ -55,6 +55,8 @@ class CapsuleImpl : public ConvexSet<dim> {
       SupportFunctionHint<dim>* /*hint*/ = nullptr) const final override;
 
   bool RequireUnitNormal() const final override;
+
+  bool IsPolytopic() const final override;
 
  private:
   const Real hlx_;    /**< Half axis length. */
@@ -86,6 +88,11 @@ inline Real CapsuleImpl<dim>::SupportFunction(
 template <int dim>
 inline bool CapsuleImpl<dim>::RequireUnitNormal() const {
   return true;
+}
+
+template <int dim>
+inline bool CapsuleImpl<dim>::IsPolytopic() const {
+  return false;
 }
 
 using Stadium = CapsuleImpl<2>;

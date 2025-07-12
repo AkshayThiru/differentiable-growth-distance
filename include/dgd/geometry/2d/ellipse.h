@@ -39,7 +39,7 @@ class Ellipse : public ConvexSet<2> {
    * @param hlx,hly Half axis lengths.
    * @param margin  Safety margin.
    */
-  explicit Ellipse(Real hlx, Real hly, Real margin);
+  explicit Ellipse(Real hlx, Real hly, Real margin = 0.0);
 
   ~Ellipse() = default;
 
@@ -48,6 +48,8 @@ class Ellipse : public ConvexSet<2> {
       SupportFunctionHint<2>* /*hint*/ = nullptr) const final override;
 
   bool RequireUnitNormal() const final override;
+
+  bool IsPolytopic() const final override;
 
  private:
   const Real hlx2_;   /**< Square of the half x-axis length. */
@@ -72,6 +74,8 @@ inline Real Ellipse::SupportFunction(const Vec2r& n, Vec2r& sp,
 }
 
 inline bool Ellipse::RequireUnitNormal() const { return (margin_ > 0.0); }
+
+inline bool Ellipse::IsPolytopic() const { return false; }
 
 }  // namespace dgd
 

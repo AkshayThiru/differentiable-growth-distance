@@ -39,7 +39,7 @@ class Rectangle : public ConvexSet<2> {
    * @param hlx,hly Half side lengths.
    * @param margin  Safety margin.
    */
-  explicit Rectangle(Real hlx, Real hly, Real margin);
+  explicit Rectangle(Real hlx, Real hly, Real margin = 0.0);
 
   ~Rectangle() = default;
 
@@ -48,6 +48,8 @@ class Rectangle : public ConvexSet<2> {
       SupportFunctionHint<2>* /*hint*/ = nullptr) const final override;
 
   bool RequireUnitNormal() const final override;
+
+  bool IsPolytopic() const final override;
 
  private:
   const Real hlx_;    /**< Half x-axis side length. */
@@ -72,6 +74,8 @@ inline Real Rectangle::SupportFunction(const Vec2r& n, Vec2r& sp,
 }
 
 inline bool Rectangle::RequireUnitNormal() const { return (margin_ > 0.0); }
+
+inline bool Rectangle::IsPolytopic() const { return (margin_ == 0.0); }
 
 }  // namespace dgd
 

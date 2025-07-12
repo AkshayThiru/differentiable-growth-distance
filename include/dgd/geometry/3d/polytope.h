@@ -42,12 +42,12 @@ class Polytope : public ConvexSet<3> {
    * origin in its interior.
    *
    * @param vert     Vector of n three-dimensional vertices.
-   * @param margin   Safety margin.
    * @param inradius Polytope inradius.
+   * @param margin   Safety margin.
    * @param thresh   Support function threshold.
    */
-  explicit Polytope(const std::vector<Vec3r>& vert, Real margin, Real inradius,
-                    Real thresh = Real(0.75));
+  explicit Polytope(const std::vector<Vec3r>& vert, Real inradius,
+                    Real margin = 0.0, Real thresh = Real(0.75));
 
   ~Polytope() = default;
 
@@ -56,6 +56,8 @@ class Polytope : public ConvexSet<3> {
       SupportFunctionHint<3>* hint = nullptr) const final override;
 
   bool RequireUnitNormal() const final override;
+
+  bool IsPolytopic() const final override;
 
   const std::vector<Vec3r>& vertices() const;
 
@@ -68,8 +70,8 @@ class Polytope : public ConvexSet<3> {
   const Real thresh_;  // Support function threshold.
 };
 
-inline Polytope::Polytope(const std::vector<Vec3r>& vert, Real margin,
-                          Real inradius, Real thresh)
+inline Polytope::Polytope(const std::vector<Vec3r>& vert, Real inradius,
+                          Real margin, Real thresh)
     : ConvexSet<3>(margin + inradius),
       vert_(vert),
       margin_(margin),
@@ -118,6 +120,8 @@ inline Real Polytope::SupportFunction(const Vec3r& n, Vec3r& sp,
 }
 
 inline bool Polytope::RequireUnitNormal() const { return (margin_ > 0.0); }
+
+inline bool Polytope::IsPolytopic() const { return (margin_ == 0.0); }
 
 inline const std::vector<Vec3r>& Polytope::vertices() const { return vert_; }
 

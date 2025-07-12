@@ -44,7 +44,7 @@ void Set2dConvexSets(ConvexSetPtr<2>& set1, ConvexSetPtr<2>& set2,
   }
   GrahamScan(pts, vert);
   Real inradius = ComputePolygonInradius(vert, Vec2r::Zero());
-  set2 = std::make_unique<Polygon>(vert, margin2, inradius);
+  set2 = std::make_unique<Polygon>(vert, inradius, margin2);
 }
 
 void Set3dConvexSets(ConvexSetPtr<3>& set1, ConvexSetPtr<3>& set2,
@@ -74,7 +74,7 @@ void Set3dConvexSets(ConvexSetPtr<3>& set1, ConvexSetPtr<3>& set2,
   ASSERT_TRUE(valid);
   const Real inradius = ml.ComputeInradius(vec);
   for (auto& v : vert) v -= vec;
-  set2 = std::make_unique<Mesh>(vert, graph, margin2, inradius);
+  set2 = std::make_unique<Mesh>(vert, graph, inradius, margin2);
 }
 
 const Real kTol = kSqrtEps;

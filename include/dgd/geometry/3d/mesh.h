@@ -47,13 +47,13 @@ class Mesh : public ConvexSet<3> {
    *
    * @param vert        Vertices of the mesh convex hull.
    * @param graph       Vertex adjacency graph of the mesh convex hull.
-   * @param margin      Safety margin.
    * @param inradius    Polytope inradius.
+   * @param margin      Safety margin.
    * @param thresh      Support function threshold.
    * @param guess_level Guess level for the warm start index.
    */
   explicit Mesh(const std::vector<Vec3r>& vert, const std::vector<int>& graph,
-                Real margin, Real inradius, Real thresh = Real(0.9),
+                Real inradius, Real margin = 0.0, Real thresh = Real(0.9),
                 int guess_level = 1);
 
   ~Mesh() = default;
@@ -68,6 +68,8 @@ class Mesh : public ConvexSet<3> {
       SupportFunctionHint<3>* hint = nullptr) const final override;
 
   bool RequireUnitNormal() const final override;
+
+  bool IsPolytopic() const final override;
 
   const std::vector<Vec3r>& vertices() const;
 
@@ -93,7 +95,7 @@ class Mesh : public ConvexSet<3> {
 };
 
 inline Mesh::Mesh(const std::vector<Vec3r>& vert, const std::vector<int>& graph,
-                  Real margin, Real inradius, Real thresh, int guess_level)
+                  Real inradius, Real margin, Real thresh, int guess_level)
     : ConvexSet<3>(margin + inradius),
       vert_(vert),
       graph_(graph),
@@ -201,6 +203,8 @@ inline Real Mesh::SupportFunction(const Vec3r& n, Vec3r& sp,
 }
 
 inline bool Mesh::RequireUnitNormal() const { return (margin_ > 0.0); }
+
+inline bool Mesh::IsPolytopic() const { return (margin_ == 0.0); }
 
 inline const std::vector<Vec3r>& Mesh::vertices() const { return vert_; }
 
