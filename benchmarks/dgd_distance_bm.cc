@@ -1,6 +1,5 @@
 #include <cmath>
 #include <functional>
-#include <iomanip>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -16,6 +15,7 @@
 #include "dgd/output.h"
 #include "dgd/settings.h"
 #include "dgd/utils/timer.h"
+#include "internal_helpers/debug.h"
 #include "internal_helpers/filesystem_utils.h"
 #include "internal_helpers/random_utils.h"
 #include "internal_helpers/set_generator.h"
@@ -24,8 +24,8 @@
 const bool dynamic_dispatch = false;
 const bool cold_start = true;
 const bool warm_start = true;
-const bool two_dim_sets = true;
-const bool three_dim_sets = false;
+const bool two_dim_sets = false;
+const bool three_dim_sets = true;
 
 // Printing.
 const bool print_suboptimal_run = true;
@@ -36,11 +36,11 @@ const double position_lim = 5.0;
 const double dx_max = 0.1, ang_max = dgd::kPi / 18.0;
 
 //  Number of pairs of sets to benchmark.
-const int npair = 10000;
+const int npair = 1000;
 //  Number of poses per set pair for cold-start.
-const int npose_c = 1000;
+const int npose_c = 100;
 //  Number of poses per set pair for warm-start.
-const int npose_w = 1000;
+const int npose_w = 100;
 //  Number of cold-start function calls for a given pair of sets and poses.
 const int ncold = 100;
 //  Number of warm-start function calls for a given pair of sets.
@@ -71,55 +71,6 @@ struct OptimalSolution {
     out.status = status;
   }
 };
-
-void PrintStatistics(double avg_solve_time, double max_prim_dual_gap,
-                     double max_prim_feas_err, double max_dual_feas_err,
-                     double avg_iter, int nsubopt) {
-  std::cout << "Avg. solve time (us)    : " << avg_solve_time << std::endl;
-  std::cout << std::scientific;
-  std::cout << "Max. prim dual gap      : " << max_prim_dual_gap << std::endl;
-  std::cout << "Max. prim infeas err (m): " << max_prim_feas_err << std::endl;
-  std::cout << "Max. dual infeas err    : " << max_dual_feas_err << std::endl;
-  std::cout.unsetf(std::ios::fixed | std::ios::scientific);
-  std::cout << "Avg. iterations         : " << avg_iter << std::endl;
-  std::cout << "Num. suboptimal runs    : " << nsubopt << std::endl;
-  std::cout << std::endl;
-}
-
-template <int dim>
-void PrintTransform(const dgd::Transformr<dim>& tf) {
-  for (int i = 0; i < dim + 1; ++i) {
-    std::cout << "  (";
-    for (int j = 0; j < dim; ++j) std::cout << tf(i, j) << ", ";
-    std::cout << tf(i, dim) << ")" << std::endl;
-  }
-}
-
-template <int dim>
-void PrintSetup(const dgd::ConvexSet<dim>* set1,
-                const dgd::Transformr<dim>& tf1,
-                const dgd::ConvexSet<dim>* set2,
-                const dgd::Transformr<dim>& tf2, const dgd::Settings& settings,
-                bool warm_start = false) {
-  std::cout << "--- Solution error ---" << std::endl;
-  if (warm_start) {
-    std::cout << "Warm start (N = " << nwarm << ")" << std::endl;
-  } else {
-    std::cout << "Cold start" << std::endl;
-  }
-  std::cout << "Transform 1:" << std::endl;
-  PrintTransform<dim>(tf1);
-  std::cout << "Transform 2:" << std::endl;
-  PrintTransform<dim>(tf2);
-  std::cout << "Set 1: ";
-  set1->PrintInfo();
-  std::cout << "Set 2: ";
-  set2->PrintInfo();
-  std::cout << "Settings: " << std::endl
-            << "  Max iter: " << settings.max_iter << std::endl
-            << "  Rel tol: " << settings.rel_tol << std::endl
-            << "  Min center dist: " << settings.min_center_dist << std::endl;
-}
 
 template <int dim, class C1, class C2>
 void ColdStart(std::function<const SetPtr<C1>()> generator1,
@@ -155,7 +106,8 @@ void ColdStart(std::function<const SetPtr<C1>()> generator1,
 
       if (print_suboptimal_run) {
         if (out.status == dgd::SolutionStatus::MaxIterReached) {
-          PrintSetup<dim>(set1.get(), tf1, set2.get(), tf2, settings);
+          dgd::internal::PrintSetup<dim>(set1.get(), tf1, set2.get(), tf2,
+                                         settings, out, err);
           if (exit_on_suboptimal_run) exit(EXIT_FAILURE);
         }
       }
@@ -172,8 +124,9 @@ void ColdStart(std::function<const SetPtr<C1>()> generator1,
   avg_solve_time = avg_solve_time / (npair * npose);
   avg_iter = avg_iter / (npair * npose);
 
-  PrintStatistics(avg_solve_time, max_prim_dual_gap, max_prim_infeas_err,
-                  max_dual_infeas_err, avg_iter, nsubopt);
+  dgd::internal::PrintStatistics(avg_solve_time, max_prim_dual_gap,
+                                 max_prim_infeas_err, max_dual_infeas_err,
+                                 avg_iter, nsubopt);
 }
 
 template <int dim, class C1, class C2>
@@ -223,15 +176,25 @@ void WarmStart(std::function<const SetPtr<C1>()> generator1,
         dgd::internal::UpdateRigidBodyTransform(tf1, dx, drot);
         opt_sols[k].SetOutput(out);
 
+        const auto err =
+            dgd::ComputeSolutionError(set1.get(), tf1, set2.get(), tf2, out);
+
         if (print_suboptimal_run) {
           if (out.status == dgd::SolutionStatus::MaxIterReached) {
-            PrintSetup<dim>(set1.get(), tf1_c, set2.get(), tf2, settings, true);
+            if (k == 0) {
+              dgd::internal::PrintSetup<dim>(set1.get(), tf1, set2.get(), tf2,
+                                             settings, out, err);
+            } else {
+              dgd::Output<dim> out_prev;
+              opt_sols[k - 1].SetOutput(out_prev);
+              dgd::internal::PrintSetup<dim>(set1.get(), tf1, set2.get(), tf2,
+                                             settings, out, err, &out_prev,
+                                             true);
+            }
             if (exit_on_suboptimal_run) exit(EXIT_FAILURE);
           }
         }
 
-        const auto err =
-            dgd::ComputeSolutionError(set1.get(), tf1, set2.get(), tf2, out);
         max_prim_dual_gap = std::max(max_prim_dual_gap, err.prim_dual_gap);
         max_prim_infeas_err =
             std::max(max_prim_infeas_err, err.prim_infeas_err);
@@ -245,8 +208,9 @@ void WarmStart(std::function<const SetPtr<C1>()> generator1,
   avg_solve_time = avg_solve_time / (npair * npose);
   avg_iter = avg_iter / (npair * npose);
 
-  PrintStatistics(avg_solve_time, max_prim_dual_gap, max_prim_infeas_err,
-                  max_dual_infeas_err, avg_iter, nsubopt);
+  dgd::internal::PrintStatistics(avg_solve_time, max_prim_dual_gap,
+                                 max_prim_infeas_err, max_dual_infeas_err,
+                                 avg_iter, nsubopt);
 }
 
 int main(int argc, char** argv) {

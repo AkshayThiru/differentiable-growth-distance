@@ -27,6 +27,7 @@ void MeshProperties::SetVertexMeshFromObjFile(const std::string& filename) {
     throw;
   }
   nvert = static_cast<int>(vert.size());
+  name = filename;
 }
 
 void MeshProperties::SetFacetMeshFromObjFile(const std::string& filename) {
@@ -47,6 +48,7 @@ void MeshProperties::SetFacetMeshFromObjFile(const std::string& filename) {
     throw;
   }
   nfacet = static_cast<int>(normal.size());
+  name = filename;
 }
 
 void MeshProperties::SetFacetMeshFromVertices(const std::vector<Vec3r>& vert) {

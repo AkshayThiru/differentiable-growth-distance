@@ -19,6 +19,7 @@ struct MeshProperties {
   Real inradius = 0.0;
   int nvert = 0;
   int nfacet = 0;
+  std::string name;
 
   // Sets vertex and facets meshes from .obj file.
   void SetVertexMeshFromObjFile(const std::string& filename);
