@@ -1,0 +1,285 @@
+// Copyright 2025 Akshay Thirugnanam
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+/**
+ * @file bundle_scheme_2d.h
+ * @author Akshay Thirugnanam (akshay_t@berkeley.edu)
+ * @date 2025-07-14
+ * @brief Bundle schemes for the two-dimensional growth distance problem.
+ */
+
+#ifndef DGD_SOLVERS_BUNDLE_SCHEME_2D_H_
+#define DGD_SOLVERS_BUNDLE_SCHEME_2D_H_
+
+#include <cmath>
+
+#include "dgd/data_types.h"
+#include "dgd/output.h"
+#include "dgd/settings.h"
+#include "dgd/solvers/debug.h"
+#include "dgd/solvers/solver_options.h"
+#include "dgd/solvers/utils.h"
+
+namespace dgd {
+
+namespace detail {
+
+/*
+ * Initialization.
+ */
+
+// Initializes the simplex, normal vector, and barycentric coordinates.
+inline void InitializeSimplex(Matr<2, 2>& s, Vec2r& n, Real r, Output<2>& out) {
+  s.col(0) = Vec2r(-r, 0.0);
+  s.col(1) = Vec2r(r, 0.0);
+  n = Vec2r::UnitY();
+  out.bc = Vec2r::Constant(0.5);
+}
+
+// Initializes the convex set simplices corresponding to the Minkowski
+// difference set simplex.
+inline void InitializeSetSimplices(const MinkowskiDiffProp<2>& mdp,
+                                   Output<2>& out) {
+  out.s1.col(1) = out.r1_ * mdp.rot1.transpose().col(0);
+  out.s1.col(0) = -out.s1.col(1);
+  out.s2.col(0) = out.r2_ * mdp.rot2.transpose().col(0);
+  out.s2.col(1) = -out.s2.col(0);
+}
+
+/*
+ * Cutting plane method functions.
+ */
+
+// Updates the simplices and the barycentric coordinates and returns the lower
+// bound, given a support point.
+inline Real UpdateSimplex(const Vec2r& sp, const Vec2r& sp1, const Vec2r& sp2,
+                          Matr<2, 2>& s, Output<2>& out, int* idxn = nullptr) {
+  const int idx = (sp(0) >= 0);
+  s.col(idx) = sp;
+  out.s1.col(idx) = sp1;
+  out.s2.col(idx) = sp2;
+  if (idxn) *idxn = idx;
+
+  out.bc = Vec2r(s(0, 1), -s(0, 0));
+  out.bc /= out.bc.sum();
+  return s.row(1) * out.bc;
+}
+
+// Updates the normal vector for the cutting plane method.
+inline void UpdateNormalCuttingPlane(const Matr<2, 2>& s, Vec2r& n) {
+  n = Vec2r(s(1, 0) - s(1, 1), s(0, 1) - s(0, 0));
+}
+
+/*
+ * Proximal bundle and trust region Newton method functions.
+ */
+
+// Updates the normal vector to the proximal point value.
+// gamma > 0 should be ensured; if gamma = 0, use the cutting plane update.
+inline void UpdateNormalProximalPoint(const Matr<2, 2>& s, Vec2r& n, Real gamma,
+                                      int idxn) {
+  Vec2r n_cp;
+  UpdateNormalCuttingPlane(s, n_cp);
+
+  const Real sgn = Real(2 * idxn - 1);
+  // const Real grad = gamma * (n_cp(0) / n_cp(1) - n(0) / n(1)) + s(0, idxn);
+  const Real grad =
+      gamma * (n_cp(0) * n(1) - n(0) * n_cp(1)) + n(1) * n_cp(1) * s(0, idxn);
+  if (sgn * grad < Real(0.0)) {
+    n(0) -= n(1) * (s(0, idxn) / gamma);
+  } else {
+    n = n_cp;
+  }
+}
+
+/*
+ * Warm start.
+ */
+
+// Warm starts the simplex and the normal vector and returns the lower bound.
+template <bool detect_collision>
+inline Real WarmStart(const MinkowskiDiffProp<2>& mdp, Matr<2, 2>& s, Vec2r& n,
+                      Output<2>& out) {
+  const Matr<2, 2> s1 = out.s1, s2 = out.s2;
+  Vec2r sp;
+  Real lb = 0.0;
+
+  InitializeSimplex(s, n, mdp.r, out);
+  // if constexpr (detect_collision) InitializeSetSimplices(mdp, out);
+  InitializeSetSimplices(mdp, out);
+  for (int i = 0; i < 2; ++i) {
+    if (out.bc(i) > SolverSettings::kEpsMinBc) {
+      sp.noalias() = mdp.rot1 * s1.col(i) - mdp.rot2 * s2.col(i);
+      if (n.dot(sp - s.col(0)) > Real(0.0)) {
+        lb = UpdateSimplex(sp, s1.col(i), s2.col(i), s, out);
+        UpdateNormalCuttingPlane(s, n);
+      }
+    }
+  }
+  NormalizeNormal(n, out.normalize_2norm_);
+  return lb;
+}
+
+/*
+ * Debug printing.
+ */
+
+// Prints debugging information at any iteration of the algorithm.
+inline void PrintDebugIteration(int iter, [[maybe_unused]] Real cdist, Real lb,
+                                Real ub, Real rel_tol, const Matr<2, 2>& s,
+                                const Vec2r& bc) {
+  if constexpr (SolverSettings::kPrintGdBounds) {
+    PrintDebugIteration(iter, cdist / lb, cdist / ub, rel_tol,
+                        std::abs(s.row(0) * bc));
+  } else {
+    PrintDebugIteration(iter, ub, lb, rel_tol, std::abs(s.row(0) * bc));
+  }
+}
+
+/*
+ * General bundle scheme in 2D.
+ */
+
+// Bundle scheme for the two-dimensional growth distance problem.
+// When detecting collision, the output is 1.0 if the sets are colliding,
+// and -1.0 otherwise.
+template <class C1, class C2, SolverType S, bool detect_collision>
+Real BundleScheme(const C1* set1, const Transform2r& tf1, const C2* set2,
+                  const Transform2r& tf2, const Settings& settings,
+                  Output<2>& out, bool warm_start) {
+  if (!warm_start) InitializeOutput(set1, set2, out);
+
+  MinkowskiDiffProp<2> mdp;
+  // Check center distance.
+  mdp.SetCenterDistance(tf1, tf2);
+  if (mdp.cdist < settings.min_center_dist) return SetZeroOutput(tf1, tf2, out);
+  // Set alignment rotation matrices and inradius.
+  mdp.SetRotationMatrices(tf1, tf2);
+  mdp.r = out.r1_ + out.r2_;
+
+  // Support function output.
+  SupportFunctionOutput<2, SolverOrder<S>()> sfo;
+  // Simplex matrix and the normal vector.
+  Matr<2, 2> s;
+  Vec2r n;
+  // Growth distance bounds.
+  Real lb = 0.0, ub = kInf, gd;
+  // Other local variables.
+  int iter = 0, idxn;
+
+  if (warm_start && (out.status == SolutionStatus::Optimal)) {
+    // Warm start.
+    lb = WarmStart<detect_collision>(mdp, s, n, out);
+  } else {
+    // Cold start.
+    InitializeSimplex(s, n, mdp.r, out);
+    // Note: There can be some edge case numerical issues with the primal
+    // infeasibility error if the convex set simplices are not initialized.
+    // These issues do not seem to occur with the cutting plane method.
+    // if constexpr (detect_collision) InitializeSetSimplices(mdp, out);
+    InitializeSetSimplices(mdp, out);
+  }
+
+  if constexpr (SolverSettings::kEnableDebugPrinting) {
+    PrintDebugHeader(SolverName<S>() + " (dim = 2)");
+    PrintDebugIteration(iter, mdp.cdist, lb, ub, settings.rel_tol, s, out.bc);
+  }
+
+  while (true) {
+    // Evaluate the support functions at the normal.
+    sfo.Evaluate(set1, set2, mdp, n, out);
+
+    // Update the upper bound and the current best normal vector.
+    const Real ub_new = (sfo.sv1 + sfo.sv2) / n(1);
+    if (ub_new < ub) {
+      ub = ub_new;
+      out.normal = n;
+    }
+    // Update the lower bound and the simplex.
+    if constexpr (S == SolverType::CuttingPlane) {
+      lb = UpdateSimplex(sfo.sp, sfo.sp1, sfo.sp2, s, out);
+    } else if constexpr (S == SolverType::ProximalBundle) {
+      // In 2D, the lower bound is guaranteed to be nondecreasing.
+      lb = UpdateSimplex(sfo.sp, sfo.sp1, sfo.sp2, s, out, &idxn);
+    } else {  // TrustRegionNewton.
+      lb = UpdateSimplex(sfo.sp, sfo.deriv1.sp, sfo.deriv2.sp, s, out, &idxn);
+    }
+    ++iter;
+
+    if constexpr (SolverSettings::kEnableDebugPrinting) {
+      PrintDebugIteration(iter, mdp.cdist, lb, ub, settings.rel_tol, s, out.bc);
+    }
+
+    // Termination criteria.
+    if constexpr (detect_collision) {
+      // Perform collision check.
+      if (ub < mdp.cdist) {
+        // No collision.
+        ComputeDualSolution(mdp.rot, mdp.cdist, ub, out);
+        out.status = SolutionStatus::Optimal;
+        gd = -1.0;
+        break;
+      } else if (lb >= mdp.cdist) {
+        // Collision.
+        ComputePrimalSolution(tf1, tf2, mdp.cdist, lb, out);
+        out.status = SolutionStatus::Optimal;
+        gd = 1.0;
+        break;
+      }
+    } else {
+      // Check primal-dual gap.
+      if (ub <= lb * settings.rel_tol) {
+        ComputePrimalSolution(tf1, tf2, mdp.cdist, lb, out);
+        gd = ComputeDualSolution(mdp.rot, mdp.cdist, ub, out);
+        out.status = SolutionStatus::Optimal;
+        break;
+      }
+    }
+    // Check number of iterations.
+    if (iter >= settings.max_iter) {
+      ComputePrimalSolution(tf1, tf2, mdp.cdist, lb, out);
+      gd = ComputeDualSolution(mdp.rot, mdp.cdist, ub, out);
+      out.status = SolutionStatus::MaxIterReached;
+      break;
+    }
+
+    // Update the normal vector.
+    if constexpr (S == SolverType::CuttingPlane) {
+      UpdateNormalCuttingPlane(s, n);
+    } else if constexpr (S == SolverType::ProximalBundle) {
+      const Real gamma = ComputeGammaProximalBundle(ub, mdp.r, iter);
+      UpdateNormalProximalPoint(s, n, gamma, idxn);
+    } else {  // TrustRegionNewton.
+      Real hess;
+      if (sfo.differentiable &&
+          ((hess = n(1) * sfo.Dsp(0, 0)) > SolverSettings::kHessMin2)) {
+        UpdateNormalProximalPoint(s, n, hess, idxn);
+      } else {
+        UpdateNormalCuttingPlane(s, n);
+      }
+    }
+    NormalizeNormal(n, out.normalize_2norm_);
+  }
+  out.iter = iter;
+
+  if constexpr (SolverSettings::kEnableDebugPrinting) PrintDebugFooter();
+
+  return gd;
+}
+
+}  // namespace detail
+
+}  // namespace dgd
+
+#endif  // DGD_SOLVERS_BUNDLE_SCHEME_2D_H_

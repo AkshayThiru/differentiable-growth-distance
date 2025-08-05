@@ -66,9 +66,9 @@ void PrintSetup(const ConvexSet<dim>* set1, const Transformr<dim>& tf1,
     std::cout << "Cold start" << std::endl;
   }
   std::cout << "Transform 1:" << std::endl;
-  PrintMatrix<dim + 1>(tf1);
+  PrintMatrix(tf1);
   std::cout << "Transform 2:" << std::endl;
-  PrintMatrix<dim + 1>(tf2);
+  PrintMatrix(tf2);
   std::cout << "Set 1: ";
   set1->PrintInfo();
   std::cout << "Set 2: ";

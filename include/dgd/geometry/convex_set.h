@@ -112,9 +112,8 @@ class ConvexSet {
    * sp & \leftarrow sp + m \cdot n,
    * \f}
    * where \f$m\f$ is the safety margin. Note that the safety margin also
-   * increases the inradius.
-   *
-   * @attention A nonzero safety margin can result in slower convergence.
+   * increases the inradius. A nonzero safety margin can result in slower
+   * convergence when using the cutting plane method.
    *
    * @see RequireUnitNormal
    *

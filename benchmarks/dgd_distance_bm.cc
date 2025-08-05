@@ -21,10 +21,10 @@
 #include "internal_helpers/set_generator.h"
 
 // Benchmarks to run.
-const bool dynamic_dispatch = false;
+// const bool dynamic_dispatch = false;
 const bool cold_start = true;
 const bool warm_start = true;
-const bool two_dim_sets = false;
+const bool two_dim_sets = true;
 const bool three_dim_sets = true;
 
 // Printing.
@@ -36,11 +36,11 @@ const double position_lim = 5.0;
 const double dx_max = 0.1, ang_max = dgd::kPi / 18.0;
 
 //  Number of pairs of sets to benchmark.
-const int npair = 1000;
+const int npair = 10000;
 //  Number of poses per set pair for cold-start.
-const int npose_c = 100;
+const int npose_c = 1000;
 //  Number of poses per set pair for warm-start.
-const int npose_w = 100;
+const int npose_w = 1000;
 //  Number of cold-start function calls for a given pair of sets and poses.
 const int ncold = 100;
 //  Number of warm-start function calls for a given pair of sets.
@@ -106,9 +106,9 @@ void ColdStart(std::function<const SetPtr<C1>()> generator1,
 
       if (print_suboptimal_run) {
         if (out.status == dgd::SolutionStatus::MaxIterReached) {
-          dgd::internal::PrintSetup<dim>(set1.get(), tf1, set2.get(), tf2,
-                                         settings, out, err);
-          if (exit_on_suboptimal_run) exit(EXIT_FAILURE);
+          dgd::internal::PrintSetup(set1.get(), tf1, set2.get(), tf2, settings,
+                                    out, err);
+          if (exit_on_suboptimal_run) return;
         }
       }
 
@@ -187,11 +187,10 @@ void WarmStart(std::function<const SetPtr<C1>()> generator1,
             } else {
               dgd::Output<dim> out_prev;
               opt_sols[k - 1].SetOutput(out_prev);
-              dgd::internal::PrintSetup<dim>(set1.get(), tf1, set2.get(), tf2,
-                                             settings, out, err, &out_prev,
-                                             true);
+              dgd::internal::PrintSetup(set1.get(), tf1, set2.get(), tf2,
+                                        settings, out, err, &out_prev, true);
             }
-            if (exit_on_suboptimal_run) exit(EXIT_FAILURE);
+            if (exit_on_suboptimal_run) return;
           }
         }
 
@@ -245,6 +244,7 @@ int main(int argc, char** argv) {
   };
 
   // Benchmarks.
+  /*
   //  1. Dynamic dispatch: (frustum + ellipsoid, cold-start).
   if (dynamic_dispatch) {
     set_default_seed();
@@ -298,6 +298,7 @@ int main(int argc, char** argv) {
     ColdStart<3, dgd::Mesh, dgd::Mesh>(generator, generator, rng, npair,
                                        npose_c);
   }
+  */
 
   std::cout << std::string(50, '-') << std::endl;
   set_random_seed();
@@ -329,9 +330,18 @@ int main(int argc, char** argv) {
     ColdStart<3, dgd::ConvexSet<3>, dgd::ConvexSet<3>>(generator, generator,
                                                        rng, npair, npose_w);
   }
+  //  8. Cold-start: (mesh + mesh).
+  if (cold_start && three_dim_sets && (gen.nmeshes() > 0)) {
+    auto generator = [&gen]() -> const SetPtr<dgd::ConvexSet<3>> {
+      return gen.GetRandomMeshSet();
+    };
+    std::cout << "Cold-start: (mesh + mesh)" << std::endl;
+    ColdStart<3, dgd::ConvexSet<3>, dgd::ConvexSet<3>>(generator, generator,
+                                                       rng, npair, npose_c);
+  }
 
   std::cout << std::string(50, '-') << std::endl;
-  //  8. Warm-start: (2D primitive + 2D primitive).
+  //  9. Warm-start: (2D primitive + 2D primitive).
   if (warm_start && two_dim_sets) {
     auto generator = [&gen]() -> const SetPtr<dgd::ConvexSet<2>> {
       return gen.GetRandom2DSet();
@@ -340,7 +350,7 @@ int main(int argc, char** argv) {
     WarmStart<2, dgd::ConvexSet<2>, dgd::ConvexSet<2>>(generator, generator,
                                                        rng, npair, npose_w);
   }
-  //  9. Warm-start: (3D curved primitive + 3D curved primitive).
+  //  10. Warm-start: (3D curved primitive + 3D curved primitive).
   if (warm_start && three_dim_sets) {
     auto generator = [&gen]() -> const SetPtr<dgd::ConvexSet<3>> {
       return gen.GetRandomCurvedPrimitive3DSet();
@@ -350,7 +360,7 @@ int main(int argc, char** argv) {
     WarmStart<3, dgd::ConvexSet<3>, dgd::ConvexSet<3>>(generator, generator,
                                                        rng, npair, npose_w);
   }
-  //  10. Warm-start: (mesh + mesh).
+  //  11. Warm-start: (mesh + mesh).
   if (warm_start && three_dim_sets && (gen.nmeshes() > 0)) {
     auto generator = [&gen]() -> const SetPtr<dgd::ConvexSet<3>> {
       return gen.GetRandomMeshSet();

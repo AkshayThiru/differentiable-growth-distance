@@ -15,16 +15,19 @@
 #include "dgd/geometry/3d/frustum.h"
 #include "dgd/geometry/3d/mesh.h"
 #include "dgd/geometry/3d/polytope.h"
+#include "dgd/geometry/convex_set.h"
 #include "dgd/geometry/xd/capsule.h"
 #include "dgd/geometry/xd/sphere.h"
 #include "dgd/graham_scan.h"
 #include "dgd/mesh_loader.h"
+#include "dgd/utils/numerical_differentiation.h"
 #include "dgd/utils/random.h"
 
 namespace {
 
 using namespace dgd;
 
+// Generates uniformly distributed points on a circle.
 void UniformCirclePoints(Matr<2, -1>& pts, int size) {
   assert(size >= 2);
   pts.resize(2, size);
@@ -34,6 +37,7 @@ void UniformCirclePoints(Matr<2, -1>& pts, int size) {
   pts.row(1) = ang.head(size).transpose().array().sin();
 }
 
+// Generates points on a sphere.
 void UniformSpherePoints(Matr<3, -1>& pts, int size_xy, int size_z,
                          Real z_off = 0.0) {
   assert((size_xy >= 2) && (size_z >= 2));
@@ -53,12 +57,41 @@ void UniformSpherePoints(Matr<3, -1>& pts, int size_xy, int size_z,
   }
 }
 
+// Computes the actual and numerical Jacobians of the support point function.
+template <int dim>
+bool ComputeSupportPointJacobian(const ConvexSet<dim>* set, const Vecr<dim>& n,
+                                 Matr<dim, dim>& Dsp, Matr<dim, dim>& Dsp_num) {
+  // Compute the actual Jacobian.
+  SupportFunctionDerivatives<dim> deriv;
+  set->SupportFunction(n.normalized(), deriv);
+  if (!deriv.differentiable) return false;
+  Dsp = deriv.Dsp;
+
+  // Compute the numerical Jacobian.
+  NumericalDifferentiator nd{};
+  nd.Jacobian(
+      [set](const Eigen::Ref<const VecXr>& x, Eigen::Ref<VecXr> y) -> void {
+        Vecr<dim> n = x.head<dim>().normalized(), sp;
+        set->SupportFunction(n, sp);
+        y = sp;
+      },
+      n.normalized(), Dsp_num);
+  return true;
+}
+
 // Assertion functions
 const Real kTol = kSqrtEps;
+const Real kTolJac = std::sqrt(kSqrtEps);
 
 template <int dim>
 bool AssertVectorEQ(const Vecr<dim>& v1, const Vecr<dim>& v2, Real tol) {
   return (v1 - v2).template lpNorm<Eigen::Infinity>() < tol;
+}
+
+template <int dim>
+bool AssertMatrixEQ(const Matr<dim, dim>& m1, const Matr<dim, dim>& m2,
+                    Real tol) {
+  return (m1 - m2).template lpNorm<Eigen::Infinity>() < tol;
 }
 
 // Support function tests
@@ -72,6 +105,7 @@ TEST(EllipseTest, SupportFunction) {
 
   Real sv;
   Vec2r sp, spt, n;
+  Matr<2, 2> Dsp, Dsp_num;
   Matr<2, -1> pts;
   UniformCirclePoints(pts, 16);
   const Vec2r len(hlx, hly);
@@ -82,6 +116,9 @@ TEST(EllipseTest, SupportFunction) {
     sv = set.SupportFunction(n, sp);
     EXPECT_NEAR(sv, n.dot(spt), kTol);
     ASSERT_PRED3(AssertVectorEQ<2>, sp, spt, kTol);
+    if (ComputeSupportPointJacobian(&set, n, Dsp, Dsp_num)) {
+      EXPECT_PRED3(AssertMatrixEQ<2>, Dsp, Dsp_num, kTolJac);
+    }
   }
 }
 
@@ -145,10 +182,11 @@ TEST(ConeTest, SupportFunction) {
 
   Real sv;
   Vec3r sp, spt, n;
+  Matr<3, 3> Dsp, Dsp_num;
   Matr<3, -1> pts;
   // Using size_z = 9 ensures that normal is not orthogonal
   // to the cone surface (for ha = 30 deg).
-  UniformSpherePoints(pts, 16, 9, Real(1e-5));
+  UniformSpherePoints(pts, 16, 9, Real(1e-1));
   for (int i = 0; i < pts.cols(); ++i) {
     n = pts.col(i);
     n = n / n.lpNorm<Eigen::Infinity>();
@@ -162,6 +200,9 @@ TEST(ConeTest, SupportFunction) {
     sv = set.SupportFunction(n, sp);
     EXPECT_NEAR(sv, n.dot(spt), kTol);
     ASSERT_PRED3(AssertVectorEQ<3>, sp, spt, kTol);
+    if (ComputeSupportPointJacobian(&set, n, Dsp, Dsp_num)) {
+      EXPECT_PRED3(AssertMatrixEQ<3>, Dsp, Dsp_num, kTolJac);
+    }
   }
 }
 
@@ -194,6 +235,7 @@ TEST(CylinderTest, SupportFunction) {
 
   Real sv;
   Vec3r sp, spt, n;
+  Matr<3, 3> Dsp, Dsp_num;
   Matr<2, -1> pts;
   UniformCirclePoints(pts, 16);
   for (int i = 0; i < 2; ++i)
@@ -206,6 +248,9 @@ TEST(CylinderTest, SupportFunction) {
       sv = set.SupportFunction(n, sp);
       EXPECT_NEAR(sv, n.dot(spt), kTol);
       ASSERT_PRED3(AssertVectorEQ<3>, sp, spt, kTol);
+      if (ComputeSupportPointJacobian(&set, n, Dsp, Dsp_num)) {
+        EXPECT_PRED3(AssertMatrixEQ<3>, Dsp, Dsp_num, kTolJac);
+      }
     }
 }
 
@@ -218,6 +263,7 @@ TEST(EllipsoidTest, SupportFunction) {
 
   Real sv;
   Vec3r sp, spt, n;
+  Matr<3, 3> Dsp, Dsp_num;
   Matr<3, -1> pts;
   UniformSpherePoints(pts, 16, 9);
   const Vec3r len(hlx, hly, hlz);
@@ -228,6 +274,9 @@ TEST(EllipsoidTest, SupportFunction) {
     sv = set.SupportFunction(n, sp);
     EXPECT_NEAR(sv, n.dot(spt), kTol);
     EXPECT_PRED3(AssertVectorEQ<3>, sp, spt, kTol);
+    if (ComputeSupportPointJacobian(&set, n, Dsp, Dsp_num)) {
+      EXPECT_PRED3(AssertMatrixEQ<3>, Dsp, Dsp_num, kTolJac);
+    }
   }
 }
 
@@ -308,8 +357,9 @@ TEST(FrustumTest, SupportFunction) {
 
   Real sv, tha, offset;
   Vec3r sp, spt, n;
+  Matr<3, 3> Dsp, Dsp_num;
   Matr<3, -1> pts;
-  UniformSpherePoints(pts, 16, 10, Real(1e-5));
+  UniformSpherePoints(pts, 16, 10, Real(1e-1));
   for (int k = 0; k < static_cast<int>(sets.size()); ++k) {
     const auto& set = sets[k];
     for (int i = 0; i < pts.cols(); ++i) {
@@ -328,6 +378,9 @@ TEST(FrustumTest, SupportFunction) {
       sv = set.SupportFunction(n, sp);
       EXPECT_NEAR(sv, n.dot(spt), kTol);
       ASSERT_PRED3(AssertVectorEQ<3>, sp, spt, kTol);
+      if (ComputeSupportPointJacobian(&set, n, Dsp, Dsp_num)) {
+        EXPECT_PRED3(AssertMatrixEQ<3>, Dsp, Dsp_num, kTolJac);
+      }
     }
   }
 }
@@ -436,6 +489,7 @@ TYPED_TEST(CapsuleTest, SupportFunction) {
 
   Real sv;
   Vecr<dim> sp, spt, n;
+  Matr<dim, dim> Dsp, Dsp_num;
   for (int i = 0; i < size; ++i) {
     n = pts.col(i).topRows<dim>().normalized();
     spt = (radius + margin) * n;
@@ -443,6 +497,9 @@ TYPED_TEST(CapsuleTest, SupportFunction) {
     sv = set.SupportFunction(n, sp);
     EXPECT_NEAR(sv, n.dot(spt), kTol);
     ASSERT_PRED3(AssertVectorEQ<dim>, sp, spt, kTol);
+    if (ComputeSupportPointJacobian(&set, n, Dsp, Dsp_num)) {
+      EXPECT_PRED3(AssertMatrixEQ<dim>, Dsp, Dsp_num, kTolJac);
+    }
   }
 }
 
@@ -466,9 +523,14 @@ TYPED_TEST(SphereTest, SupportFunction) {
   EXPECT_EQ(set.inradius(), radius);
 
   Vecr<dim> sp;
-  Real sv = set.SupportFunction(Vecr<dim>::UnitX(), sp);
+  Matr<dim, dim> Dsp, Dsp_num;
+  Vecr<dim> n = Vecr<dim>::UnitX();
+  Real sv = set.SupportFunction(n, sp);
   EXPECT_NEAR(sv, radius, kTol);
   EXPECT_PRED3(AssertVectorEQ<dim>, sp, radius * Vecr<dim>::UnitX(), kTol);
+  if (ComputeSupportPointJacobian(&set, n, Dsp, Dsp_num)) {
+    EXPECT_PRED3(AssertMatrixEQ<dim>, Dsp, Dsp_num, kTolJac);
+  }
 }
 
 }  // namespace

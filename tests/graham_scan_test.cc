@@ -1,12 +1,11 @@
+#include "dgd/graham_scan.h"
+
 #include <gtest/gtest.h>
 
 #include <cmath>
 #include <vector>
 
 #include "dgd/data_types.h"
-// clang-format off
-#include "dgd/graham_scan.h"
-// clang-format on
 #include "dgd/utils/random.h"
 
 namespace {

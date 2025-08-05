@@ -16,13 +16,11 @@
  * @file output.h
  * @author Akshay Thirugnanam (akshay_t@berkeley.edu)
  * @date 2025-02-18
- * @brief Solver output.
+ * @brief Growth distance algorithm output.
  */
 
 #ifndef DGD_OUTPUT_H_
 #define DGD_OUTPUT_H_
-
-#include <cstdint>
 
 #include "dgd/data_types.h"
 #include "dgd/geometry/convex_set.h"
@@ -32,7 +30,7 @@ namespace dgd {
 /**
  * @brief Solution status at the termination of the algorithm.
  */
-enum class SolutionStatus : uint8_t {
+enum class SolutionStatus {
   /**
    * @brief Optimal solution reached according to the relative tolerance
    * criterion.
@@ -57,7 +55,7 @@ enum class SolutionStatus : uint8_t {
 };
 
 /**
- * @brief Solver output.
+ * @brief Growth distance algorithm output.
  *
  * @attention When not using warm start, an Output object can be shared across
  * different pairs of convex sets. However, when using warm start, each
@@ -95,21 +93,6 @@ struct Output {
   SupportFunctionHint<dim> hint1_{}, hint2_{};
 
   /**
-   * @brief Lower bound on the growth distance.
-   *
-   * The lower bound corresponds to the dual solution (normal vector).
-   */
-  Real growth_dist_lb = 0.0;
-
-  /**
-   * @brief Upper bound on the growth distance.
-   *
-   * The upper bound corresponds to the primal solution (the ray intersection on
-   * the inner polyhedral approximation).
-   */
-  Real growth_dist_ub = 0.0;
-
-  /**
    * @name Primal optimal solutions
    * @brief Primal optimal solutions for each convex set.
    *
@@ -121,20 +104,39 @@ struct Output {
   ///@}
 
   /**
-   * @brief (Lower bound of the) inradius of the Minkowski difference set.
+   * @brief Upper bound on the growth distance.
+   *
+   * The upper bound corresponds to the primal solution (the ray intersection on
+   * the inner polyhedral approximation).
    */
-  Real inradius = kEps;
+  Real growth_dist_ub = kInf;
+
+  /**
+   * @brief Lower bound on the growth distance.
+   *
+   * The lower bound corresponds to the dual solution (normal vector).
+   */
+  Real growth_dist_lb = 0.0;
+
+  // Convex set inradii.
+  Real r1_ = kEps, r2_ = kEps;
 
   /**
    * @brief Number of solver iterations.
    */
   int iter = 0;
 
+  // Unit normal vector flag.
+  bool normalize_2norm_ = true;
+
   /**
    * @brief Solution status.
    */
   SolutionStatus status = SolutionStatus::MaxIterReached;
 };
+
+using Output2d = Output<2>;
+using Output3d = Output<3>;
 
 }  // namespace dgd
 

@@ -86,7 +86,7 @@ TEST(GrowthDistanceTest, EllipsePolygon) {
   const int nsamples_warm = 100;
 
   ConvexSetPtr<2> set1, set2;
-  Set2dConvexSets(set1, set2, 0.0, 0.0);
+  Set2dConvexSets(set1, set2, Real(0.1), Real(0.1));
 
   // Compute growth distance for random transformations.
   Transform2r tf1, tf2;
@@ -108,7 +108,7 @@ TEST(GrowthDistanceTest, EllipsePolygon) {
                   out.status == SolutionStatus::CoincidentCenters);
       const SolutionError err =
           ComputeSolutionError(set1.get(), tf1, set2.get(), tf2, out);
-      ASSERT_NEAR(err.prim_feas_err, 0.0, kTol);
+      ASSERT_NEAR(err.prim_infeas_err, 0.0, kTol);
       ASSERT_NEAR(err.prim_dual_gap, 0.0, kTol);
 
       tf1.topLeftCorner<2, 2>() *= dR;
@@ -124,7 +124,7 @@ TEST(CollisionCheckTest, EllipsePolygon) {
   const int nsamples_warm = 100;
 
   ConvexSetPtr<2> set1, set2;
-  Set2dConvexSets(set1, set2, 0.0, 0.0);
+  Set2dConvexSets(set1, set2, Real(0.1), Real(0.1));
 
   // Check collisions for random transformations.
   Transform2r tf1, tf2;
@@ -165,7 +165,7 @@ TEST(GrowthDistanceTest, ConeMesh) {
   const int nsamples_warm = 100;
 
   ConvexSetPtr<3> set1, set2;
-  Set3dConvexSets(set1, set2, 0.0, 0.0);
+  Set3dConvexSets(set1, set2, Real(0.1), Real(0.1));
 
   // Compute growth distance for random transformations.
   Transform3r tf1, tf2;
@@ -186,7 +186,7 @@ TEST(GrowthDistanceTest, ConeMesh) {
                   out.status == SolutionStatus::CoincidentCenters);
       const SolutionError err =
           ComputeSolutionError(set1.get(), tf1, set2.get(), tf2, out);
-      ASSERT_NEAR(err.prim_feas_err, 0.0, kTol);
+      ASSERT_NEAR(err.prim_infeas_err, 0.0, kTol);
       ASSERT_NEAR(err.prim_dual_gap, 0.0, kTol);
 
       tf1.topLeftCorner<3, 3>() *= dR;
@@ -205,7 +205,7 @@ TEST(CollisionCheckTest, ConeMesh) {
   const int nsamples_warm = 100;
 
   ConvexSetPtr<3> set1, set2;
-  Set3dConvexSets(set1, set2, 0.0, 0.0);
+  Set3dConvexSets(set1, set2, Real(0.1), Real(0.1));
 
   // Compute growth distance for random transformations.
   Transform3r tf1, tf2;

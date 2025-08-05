@@ -16,7 +16,7 @@
  * @file settings.h
  * @author Akshay Thirugnanam (akshay_t@berkeley.edu)
  * @date 2025-02-18
- * @brief Solver settings.
+ * @brief Growth distance algorithm settings.
  */
 
 #ifndef DGD_SETTINGS_H_

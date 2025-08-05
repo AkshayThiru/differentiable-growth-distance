@@ -13,9 +13,7 @@ message(STATUS "C++ compiler: ${CMAKE_CXX_COMPILER_ID}")
 # option(DGD_USE_FFAST_MATH "Add -ffast-math compile option" OFF)
 
 #   Preprocessor definitions
-option(DGD_USE_32BIT_FLOAT                "Use 32-bit floating point" OFF)
-option(DGD_ENABLE_DEBUG_PRINTING          "Print debugging information" OFF)
-option(DGD_COMPUTE_COLLISION_INTERSECTION "Compute an intersection point when detecting collisions" OFF)
+option(DGD_USE_32BIT_FLOAT "Use 32-bit floating point" OFF)
 
 #   Installation rules
 option(DGD_INSTALL_LIBS "Install library" ON)
@@ -33,7 +31,7 @@ find_package(Qhull REQUIRED)
 set(DGD_LIB dgd)
 add_subdirectory(src)
 
-if(DGD_INSTALL_LIBS AND CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT DGD_SINGLE_PRECISION)
+if(DGD_INSTALL_LIBS AND CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT DGD_USE_32BIT_FLOAT)
   include(CMakePackageConfigHelpers)
 
   install(TARGETS ${DGD_LIB}
@@ -79,8 +77,8 @@ endif()
 
 # Tests, bechmarks, and documentation
 if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-  option(DGD_BUILD_TESTS      "Build tests" OFF)
-  option(DGD_BUILD_BENCHMARKS "Build benchmarks (only for Release config with double precision)" OFF)
+  option(DGD_BUILD_TESTS      "Build tests" ON)
+  option(DGD_BUILD_BENCHMARKS "Build benchmarks (only for Release config with double precision)" ON)
   option(DGD_BUILD_DOCS       "Build documentation" OFF)
 
   include(FetchContent)
@@ -90,7 +88,7 @@ if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     add_subdirectory(tests)
   endif()
 
-  if(DGD_BUILD_BENCHMARKS AND CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT DGD_SINGLE_PRECISION)
+  if(DGD_BUILD_BENCHMARKS AND CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT DGD_USE_32BIT_FLOAT)
     add_subdirectory(benchmarks)
   endif()
 

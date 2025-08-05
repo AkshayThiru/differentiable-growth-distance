@@ -39,3 +39,6 @@ build/
 
 # Plots.
 plots/
+
+# Temporary files
+temp/

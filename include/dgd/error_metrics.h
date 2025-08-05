@@ -49,33 +49,33 @@ struct SolutionError {
   double prim_dual_gap;
 
   /**
-   * @brief Primal feasibility error.
+   * @brief Primal infeasibility error.
    *
-   * The primal feasibility error is given by
+   * The primal infeasibility error is given by
    * \f[
-   * \text{prim_feas_err}
+   * \text{prim_infeas_err}
    * = | p_1 - p_2 + \text{growth_dist_ub} \cdot (z_1 - p_1 - (z_2 - p_2))|_2,
    * \f]
    * where \f$p_1\f$ and \f$p_2\f$ are the center points of the convex sets.
    */
-  double prim_feas_err;
+  double prim_infeas_err;
 
   /**
-   * @brief Dual feasibility error.
+   * @brief Dual infeasibility error.
    *
    * The growth distance algorithm always ensures dual feasibility, so this
    * error is zero.
    */
-  double dual_feas_err = 0.0;
+  double dual_infeas_err = 0.0;
 };
 
 /**
- * @brief Computes the primal-dual relative gap and the primal feasibility
+ * @brief Computes the primal-dual relative gap and the primal infeasibility
  * error.
  *
  * @param  set1,set2 Convex Sets.
  * @param  tf1,tf2   Rigid body transformations for the convex sets.
- * @param  out       Solver output.
+ * @param  out       Growth distance algorithm output.
  */
 template <int dim>
 SolutionError ComputeSolutionError(const ConvexSet<dim>* set1,
@@ -85,10 +85,7 @@ SolutionError ComputeSolutionError(const ConvexSet<dim>* set1,
                                    const Output<dim>& out) {
   SolutionError err{};
   if (out.status == SolutionStatus::CoincidentCenters) {
-    err.prim_dual_gap = err.prim_feas_err = 0.0;
-    return err;
-  } else if (out.status != SolutionStatus::Optimal) {
-    err.prim_dual_gap = err.prim_feas_err = kInf;
+    err.prim_dual_gap = err.prim_infeas_err = 0.0;
     return err;
   }
 
@@ -102,8 +99,8 @@ SolutionError ComputeSolutionError(const ConvexSet<dim>* set1,
   const Real sv2 = set2->SupportFunction(-rot2.transpose() * out.normal, sp);
   const Real lb = (p2 - p1).dot(out.normal) / (sv1 + sv2);
 
-  err.prim_dual_gap = std::abs(out.growth_dist_ub / lb - 1.0);
-  err.prim_feas_err =
+  err.prim_dual_gap = out.growth_dist_ub / lb - 1.0;
+  err.prim_infeas_err =
       (p1 - p2 + out.growth_dist_ub * (out.z1 - p1 - out.z2 + p2)).norm();
   return err;
 }
@@ -113,7 +110,7 @@ SolutionError ComputeSolutionError(const ConvexSet<dim>* set1,
  *
  * @param  set1,set2 Convex Sets.
  * @param  tf1,tf2   Rigid body transformations for the convex sets.
- * @param  out       Solver output.
+ * @param  out       Growth distance algorithm output.
  * @param  collision Output of the collision detection function.
  * @return true, if the collision status is correct; false otherwise.
  */
@@ -122,7 +119,8 @@ bool AssertCollisionStatus(const ConvexSet<dim>* set1,
                            const Transformr<dim>& tf1,
                            const ConvexSet<dim>* set2,
                            const Transformr<dim>& tf2, const Output<dim>& out,
-                           bool collision) {
+                           bool collision,
+                           Real max_prim_infeas_err = kSqrtEps) {
   if (out.status == SolutionStatus::CoincidentCenters) {
     return collision;
   } else if (out.status == SolutionStatus::MaxIterReached) {
@@ -135,13 +133,10 @@ bool AssertCollisionStatus(const ConvexSet<dim>* set1,
   const Rotationr<dim> rot2 = tf2.template block<dim, dim>(0, 0);
 
   if (collision) {
-#ifdef DGD_COMPUTE_COLLISION_INTERSECTION
-    const Real prim_feas_err =
+    const Real prim_infeas_err =
         (p1 - p2 + out.growth_dist_ub * (out.z1 - p1 - out.z2 + p2)).norm();
-    return (out.growth_dist_ub <= 1.0) && (prim_feas_err <= kSqrtEps);
-#else
-    return (out.growth_dist_ub <= 1.0);
-#endif
+    return (out.growth_dist_ub <= 1.0) &&
+           (prim_infeas_err <= max_prim_infeas_err);
   } else {
     Vecr<dim> sp;
     const Real sv1 = set1->SupportFunction(rot1.transpose() * out.normal, sp);
