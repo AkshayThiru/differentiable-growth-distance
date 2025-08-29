@@ -70,6 +70,9 @@ inline Real UpdateSimplex(const Vec2r& sp, const Vec2r& sp1, const Vec2r& sp2,
   if (idxn) *idxn = idx;
 
   out.bc = Vec2r(s(0, 1), -s(0, 0));
+  // out.bc.sum() is always greater than (or on the order of)
+  // 2.0 * rel_tol / inradius.
+  // Otherwise, the algorithm would have converged in the previous iteration.
   out.bc /= out.bc.sum();
   return s.row(1) * out.bc;
 }

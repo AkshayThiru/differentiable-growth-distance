@@ -103,10 +103,11 @@ SolutionError ComputeSolutionError(const ConvexSet<dim>* set1,
 /**
  * @brief Asserts the collision status of the two convex sets.
  *
- * @param  set1,set2 Convex Sets.
- * @param  tf1,tf2   Rigid body transformations for the convex sets.
- * @param  out       Growth distance algorithm output.
- * @param  collision Output of the collision detection function.
+ * @param  set1,set2           Convex Sets.
+ * @param  tf1,tf2             Rigid body transformations for the convex sets.
+ * @param  out                 Growth distance algorithm output.
+ * @param  collision           Output of the collision detection function.
+ * @param  max_prim_infeas_err Maximum primal infeasibility error.
  * @return true, if the collision status is correct; false otherwise.
  */
 template <int dim>

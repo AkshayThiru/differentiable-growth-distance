@@ -112,7 +112,7 @@ ConvexSetPtr<2> ConvexSetGenerator::GetPrimitiveSet(Primitive2D type) {
 }
 
 ConvexSetPtr<3> ConvexSetGenerator::GetPrimitiveSet(CurvedPrimitive3D type) {
-  Real margin = GetMargin();
+  const Real margin = GetMargin();
 
   switch (type) {
     case CurvedPrimitive3D::Capsule:
@@ -147,7 +147,7 @@ ConvexSetPtr<3> ConvexSetGenerator::GetPrimitiveSet(CurvedPrimitive3D type) {
 }
 
 ConvexSetPtr<3> ConvexSetGenerator::GetPrimitiveSet(FlatPrimitive3D type) {
-  const Real margin = GetMargin();
+  Real margin = GetMargin();
 
   switch (type) {
     case FlatPrimitive3D::Cuboid:

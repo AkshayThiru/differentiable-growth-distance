@@ -90,6 +90,8 @@ struct Output {
    * @name Primal optimal solutions
    * @brief Primal optimal solutions for each convex set.
    *
+   * @see SolutionError.prim_infeas_err
+   *
    * @note The primal solutions are in the world frame of reference.
    */
   ///@{

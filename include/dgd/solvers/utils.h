@@ -202,6 +202,18 @@ struct SupportFunctionOutput<dim, 2> {
                       mdp.rot2 * deriv2.Dsp * mdp.rot2.transpose();
     }
   }
+
+  // Evaluates the first-order support function at the given normal vector.
+  template <class C1, class C2>
+  void EvaluateFirstOrder(const C1* set1, const C2* set2,
+                          const MinkowskiDiffProp<dim>& mdp, const Vecr<dim>& n,
+                          Output<dim>& out) {
+    sv1 =
+        set1->SupportFunction(mdp.rot1.transpose() * n, deriv1.sp, &out.hint1_);
+    sv2 = set2->SupportFunction(-mdp.rot2.transpose() * n, deriv2.sp,
+                                &out.hint2_);
+    sp.noalias() = mdp.rot1 * deriv1.sp - mdp.rot2 * deriv2.sp;
+  }
 };
 
 }  // namespace detail

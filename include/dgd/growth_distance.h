@@ -136,47 +136,28 @@ inline Real GrowthDistanceImpl(const Halfspace<dim>* set1,
  * @param         warm_start Whether to use previous output for warm start.
  * @return        Growth distance lower bound.
  */
-///@{
-template <class C1, class C2>
-inline Real GrowthDistance(const C1* set1, const Transform2r& tf1,
-                           const C2* set2, const Transform2r& tf2,
-                           const Settings& settings, Output2& out,
+template <int dim, class C1, class C2>
+inline Real GrowthDistance(const C1* set1, const Transformr<dim>& tf1,
+                           const C2* set2, const Transformr<dim>& tf2,
+                           const Settings& settings, Output<dim>& out,
                            bool warm_start = false) {
-  if constexpr (std::is_same<Halfspace<2>, C1>::value) {
-    return GrowthDistanceImpl<2, C2>(set1, tf1, set2, tf2, settings, out,
-                                     warm_start);
-  } else if constexpr (std::is_same<Halfspace<2>, C2>::value) {
-    return GrowthDistanceImpl<2, C1>(set1, tf1, set2, tf2, settings, out,
-                                     warm_start);
+  if constexpr (std::is_same<Halfspace<dim>, C1>::value) {
+    return GrowthDistanceImpl<dim, C2>(set1, tf1, set2, tf2, settings, out,
+                                       warm_start);
+  } else if constexpr (std::is_same<Halfspace<dim>, C2>::value) {
+    return GrowthDistanceImpl<dim, C1>(set1, tf1, set2, tf2, settings, out,
+                                       warm_start);
   } else {
-    return GrowthDistanceImpl<2, C1, C2, detail::SolverType::TrustRegionNewton>(
-        set1, tf1, set2, tf2, settings, out, warm_start);
-  }
-}
-
-template <class C1, class C2>
-inline Real GrowthDistance(const C1* set1, const Transform3r& tf1,
-                           const C2* set2, const Transform3r& tf2,
-                           const Settings& settings, Output3& out,
-                           bool warm_start = false) {
-  if constexpr (std::is_same<Halfspace<3>, C1>::value) {
-    return GrowthDistanceImpl<3, C2>(set1, tf1, set2, tf2, settings, out,
-                                     warm_start);
-  } else if constexpr (std::is_same<Halfspace<3>, C2>::value) {
-    return GrowthDistanceImpl<3, C1>(set1, tf1, set2, tf2, settings, out,
-                                     warm_start);
-  } else {
-    if (set1->IsPolytopic() || set2->IsPolytopic()) {
-      return GrowthDistanceImpl<3, C1, C2, detail::SolverType::CuttingPlane>(
+    if (set1->IsPolytopic() && set2->IsPolytopic()) {
+      return GrowthDistanceImpl<dim, C1, C2, detail::SolverType::CuttingPlane>(
           set1, tf1, set2, tf2, settings, out, warm_start);
     } else {
-      return GrowthDistanceImpl<3, C1, C2,
+      return GrowthDistanceImpl<dim, C1, C2,
                                 detail::SolverType::TrustRegionNewton>(
           set1, tf1, set2, tf2, settings, out, warm_start);
     }
   }
 }
-///@}
 
 /*
  * Collision detection algorithm.

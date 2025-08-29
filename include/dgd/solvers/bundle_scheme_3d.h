@@ -20,6 +20,7 @@
 #ifndef DGD_SOLVERS_BUNDLE_SCHEME_3D_H_
 #define DGD_SOLVERS_BUNDLE_SCHEME_3D_H_
 
+#include <Eigen/Dense>
 #include <cassert>
 #include <cmath>
 #include <type_traits>
@@ -90,18 +91,6 @@ inline void InitializeSetSimplices(const MinkowskiDiffProp<3>& mdp,
  * Cutting plane method functions.
  */
 
-// Cycles the index in a CCW/CW order (for the projected simplex).
-inline constexpr int Ccw3(int idx) { return (idx == 2) ? 0 : idx + 1; }
-
-inline constexpr int Cw3(int idx) { return (idx == 0) ? 2 : idx - 1; }
-
-// Swaps two columns of the simplex matrix.
-inline void SwapSimplexColumns(Matr<3, 3>& s, int i, int j) {
-  const Vec3r temp = s.col(i);
-  s.col(i) = s.col(j);
-  s.col(j) = temp;
-}
-
 // Computes the barycentric coordinates of a point with respect to the
 // projected simplex, assuming nondegeneracy.
 inline void ComputePointCoordinates(const Eigen::Ref<const Vec2r>& p,
@@ -114,6 +103,11 @@ inline void ComputePointCoordinates(const Eigen::Ref<const Vec2r>& p,
               bsc.area;
   bsc.bc(2) = Real(1.0) - (bsc.bc(0) + bsc.bc(1));
 }
+
+// Cycles the index in a CCW/CW order (for the projected simplex).
+inline constexpr int Ccw3(int idx) { return (idx == 2) ? 0 : idx + 1; }
+
+inline constexpr int Cw3(int idx) { return (idx == 0) ? 2 : idx - 1; }
 
 // When the projected simplex is degenerate, checks whether an edge intersects
 // with the z-axis; if so, updates the z-intercept and barycentric coordinates.
@@ -156,14 +150,23 @@ inline Real UpdateOriginCoordinates1D(const Matr<3, 3>& s, Vec3r& bc) {
 // Updates the barycentric coordinates of the origin, and returns the
 // z-coordinate of the intersection point.
 inline Real UpdateOriginCoordinates(BundleScheme3Context& bsc, Vec3r& bc) {
-  // The projected (signed) simplex area is guaranteed to be positive. The
-  // implementation below is for robustness.
+  // The projected (signed) simplex area is theoretically guaranteed to be
+  // positive. However, some coordinates may become slightly negative.
   bc(0) = std::abs(bsc.s(0, 1) * bsc.s(1, 2) - bsc.s(1, 1) * bsc.s(0, 2));
   bc(1) = std::abs(bsc.s(0, 2) * bsc.s(1, 0) - bsc.s(1, 2) * bsc.s(0, 0));
   bc(2) = std::abs(bsc.s(0, 0) * bsc.s(1, 1) - bsc.s(1, 0) * bsc.s(0, 1));
   bsc.area = bc.sum();
   if (bsc.area > SolverSettings::kEpsArea3) {
     bc /= bsc.area;
+    if constexpr (SolverSettings::kBoundPrimInfeasErr3) {
+      if ((bsc.s.topRows<2>() * bc).squaredNorm() >
+          SolverSettings::kEpsSqPrimInfeasErr3) {
+        Matr<3, 3> Aeq;
+        Aeq.topRows<2>() = bsc.s.topRows<2>();
+        Aeq.row(2) = Vec3r::Ones().transpose();
+        bc = Aeq.partialPivLu().solve(Vec3r::UnitZ());
+      }
+    }
     return bsc.s.row(2) * bc;
   } else {  // The projected simplex is degenerate.
     if (bsc.s.row(0).lpNorm<Eigen::Infinity>() >
@@ -197,9 +200,9 @@ inline Real UpdateSimplex(const Vec3r& sp, const Vec3r& sp1, const Vec3r& sp2,
     const int j = Ccw3(exiting_idx), k = Cw3(exiting_idx);
     if ((bsc.s.col(j) - sp).cross(bsc.s.col(k) - sp)(2) < Real(0.0)) {
       // Correct the simplex orientation.
-      SwapSimplexColumns(bsc.s, j, k);
-      SwapSimplexColumns(out.s1, j, k);
-      SwapSimplexColumns(out.s2, j, k);
+      bsc.s.col(j).swap(bsc.s.col(k));
+      out.s1.col(j).swap(out.s1.col(k));
+      out.s2.col(j).swap(out.s2.col(k));
     }
   }
 
@@ -466,7 +469,15 @@ Real BundleScheme(const C1* set1, const Transform3r& tf1, const C2* set2,
 
   while (true) {
     // Evaluate the support functions at the normal.
-    sfo.Evaluate(set1, set2, mdp, bsc.n, out);
+    if constexpr (SolverOrder<S>() == 2) {
+      if (iter < settings.cutting_plane_iter) {
+        sfo.EvaluateFirstOrder(set1, set2, mdp, bsc.n, out);
+      } else {
+        sfo.Evaluate(set1, set2, mdp, bsc.n, out);
+      }
+    } else {
+      sfo.Evaluate(set1, set2, mdp, bsc.n, out);
+    }
 
     // Update the upper bound and the current best normal vector.
     const Real ub_new = (sfo.sv1 + sfo.sv2) / bsc.n(2);
@@ -480,8 +491,8 @@ Real BundleScheme(const C1* set1, const Transform3r& tf1, const C2* set2,
     } else {
       // Check if the lower bound can be improved; if not, skip the simplex
       // update, and update the normal to the cutting plane normal.
-      if ((use_qp_update =
-               (n_cp.dot(sfo.sp - bsc.s.col(0)) > SolverSettings::kEpsLb3))) {
+      if ((use_qp_update = ((iter < settings.cutting_plane_iter) ||
+                            (n_cp.dot(sfo.sp - bsc.s.col(0)) > Real(0.0))))) {
         if constexpr (S == SolverType::ProximalBundle) {
           lb = UpdateSimplex(sfo.sp, sfo.sp1, sfo.sp2, bsc, out);
         } else {  // TrustRegionNewton.
@@ -535,12 +546,11 @@ Real BundleScheme(const C1* set1, const Transform3r& tf1, const C2* set2,
       UpdateNormalCuttingPlane(bsc, bsc.n);
     } else {
       UpdateNormalCuttingPlane(bsc, n_cp);
-      // Note: The normal update functions assume that n_cp(2) = 1.
-      n_cp /= n_cp(2);
       if constexpr (S == SolverType::ProximalBundle) {
         if (use_qp_update) {
           Q = ComputeGammaProximalBundle(ub, mdp.r, iter) *
               Matr<2, 2>::Identity();
+          n_cp /= n_cp(2);
           // UpdateNormalProximalPoint(Q, n_cp, bsc);
         } else {
           bsc.n = n_cp;
@@ -550,6 +560,7 @@ Real BundleScheme(const C1* set1, const Transform3r& tf1, const C2* set2,
             (bsc.n(2) * (sfo.Dsp(0, 0) + sfo.Dsp(1, 1)) >
              SolverSettings::kPinvTol3)) {
           Q = bsc.n(2) * sfo.Dsp.template block<2, 2>(0, 0);
+          n_cp /= n_cp(2);
           UpdateNormalNewton(Q, n_cp, bsc, idxn);
         } else {
           bsc.n = n_cp;

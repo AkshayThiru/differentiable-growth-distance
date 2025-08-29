@@ -47,6 +47,12 @@ struct Settings {
 
   /// @brief Maximum number of solver iterations.
   int max_iter = 100;
+
+  /**
+   * @brief (For proximal bundle and trust region Newton solvers in three
+   * dimensions) number of initial cutting plane iterations to run.
+   */
+  int cutting_plane_iter = 0;
 };
 
 }  // namespace dgd

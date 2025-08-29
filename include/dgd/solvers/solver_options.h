@@ -83,27 +83,27 @@ enum class TrustRegionNewtonLevel {
 
 /// @brief Solver settings.
 struct SolverSettings {
-  // [Debug]
+  // [Debugging]
   // Whether to print convergence information at each iteration.
   static constexpr bool kEnableDebugPrinting = false;
   // Whether to print growth distance bounds or dual function bounds.
   static constexpr bool kPrintGdBounds = false;
 
-  // [All solvers]
+  // [Primal warm start]
   // Smallest nonzero barycentric coordinate value.
   static constexpr Real kEpsMinBc = std::pow(kEps, Real(0.75));
 
   // [All 3D solvers]
   // Projected simplex area tolerance for barycentric coordinate computation.
   static constexpr Real kEpsArea3 = kEps;
+  // Whether to enforce bounds on the primal infeasibility error.
+  static constexpr bool kBoundPrimInfeasErr3 = true;
+  // Squared norm bound on the primal infeasibility error.
+  static constexpr Real kEpsSqPrimInfeasErr3 = std::pow(kEps, Real(1.2));
   // Constant added to the normal vector to ensure dual feasibility.
-  static constexpr Real kEpsNormal3 = 0;  // kEps;
+  static constexpr Real kEpsNormal3 = 0.0;
 
-  // [3D proximal bundle and trust region Newton]
-  // Threshold for lower bound increase.
-  static constexpr Real kEpsLb3 = std::pow(kEps, Real(0.75));
-
-  // [Proximal bundle]
+  // [Proximal bundle solver]
   // Type of proximal regularization.
   static constexpr auto kProxRegType = ProximalRegularization::kConstant;
   // Constants used to compute the regularization factor (>= 0).
@@ -111,7 +111,7 @@ struct SolverSettings {
   static constexpr Real kProxKa = Real(0.1e-3);  // Adaptive.
   static constexpr Real kProxThresh = 0.0;       // <= 1.0.
 
-  // [Trust region Newton]
+  // [Trust region Newton solver]
   // [3D] Trust region Newton solution level.
   static constexpr auto kTrnLevel = TrustRegionNewtonLevel::kPartial;
   // [3D] Skip the trust region Newton solution if the Hessian is singular.
